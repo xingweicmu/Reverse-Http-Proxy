@@ -1,0 +1,10 @@
+<virtualWireCreateSpecEx>
+   <name>ServiceNet1</name>
+   <description></description>
+   <tenantId>virtual wire tenant</tenantId>
+  <vdnSegmentDto>
+      <tenantId>virtual wire tenant</tenantId>
+      <vdnId>9072</vdnId>
+      <multicastAddr>225.0.0.5</multicastAddr>
+   </vdnSegmentDto>
+</virtualWireCreateSpecEx>

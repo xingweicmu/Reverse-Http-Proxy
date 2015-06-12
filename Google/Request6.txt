@@ -1,0 +1,1 @@
+{"path":"/images/nav_logo199.png","method":"get","headers":{"host":"localhost:9997","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:35.0) Gecko/20100101 Firefox/35.0","accept":"image/png,image/*;q=0.8,*/*;q=0.5","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate","referer":"http://localhost:9997/","connection":"keep-alive"},"body":""}

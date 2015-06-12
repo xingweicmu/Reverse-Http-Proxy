@@ -1,0 +1,1 @@
+{"content-type":"image/png","last-modified":"Mon, 18 Aug 2014 22:03:31 GMT","date":"Fri, 12 Jun 2015 16:06:51 GMT","expires":"Fri, 12 Jun 2015 16:06:51 GMT","cache-control":"private, max-age=31536000","x-content-type-options":"nosniff","server":"sffe","content-length":"14386","x-xss-protection":"1; mode=block","alternate-protocol":"80:quic,p=0","connection":"close"}

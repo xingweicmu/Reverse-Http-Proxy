@@ -1,0 +1,14 @@
+{
+  	"name": "Proxy"
+  	, "version": "0.0.1"
+  	, "private": true
+  	, "scripts": {
+    		"start": "node Proxy.js"
+  	}
+  	, "dependencies": {
+    		"ejs": "*"
+    		, "express": "3.4.8"
+		, "request": "*"
+		, "request-debug": "*"
+  	}
+}
