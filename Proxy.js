@@ -66,9 +66,9 @@ proxyApp.get('/*', function(webRequest, response) {
 	console.log('GET Request:'+webRequest.url);
 	console.log('GET Headers:'+JSON.stringify(headers));
 
-    webRequest.on('data', function(chunk) {
-        data+=chunk.toString();
-    });
+	webRequest.on('data', function(chunk) {
+		data+=chunk.toString();
+	});
 
 	webRequest.on('end', function() {
 		console.log(data); // data should be nothing here
@@ -125,15 +125,15 @@ proxyApp.post('/*', function(webRequest, response) {
 	var jar = request.jar();
 	var headers = webRequest.headers;
 	var currentRequestNum = requestCount;
-
-    var data = '';
-    console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
+	var data = '';
+	
+	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
 
-    webRequest.on('data', function(chunk) {
-        data+=chunk.toString();
-    });
+	webRequest.on('data', function(chunk) {
+		data+=chunk.toString();
+	});
 
 	webRequest.on('end', function() {
 		var currentCount = requestCount;
@@ -199,7 +199,7 @@ proxyApp.post('/*', function(webRequest, response) {
 
 //---------------[ Start the Server ]---------------//
 var server = http.createServer(proxyApp).listen(proxyApp.get('port'), function(){
-  console.log('Proxy server listening on port ' + proxyApp.get('port'));
+	console.log('Proxy server listening on port ' + proxyApp.get('port'));
 });
 
 
