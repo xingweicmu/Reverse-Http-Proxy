@@ -101,21 +101,53 @@ proxyApp.get('/*', function(webRequest, response) {
 			body:data 
 		};
 
-  		request(options, function (error, resp, body) {
-    		if (!error && response.statusCode == 200) {
-        		console.log(body);
+		// ==============THE OTHER WAY TO SEND GET REQUEST=================
+		// request.get('http://google.com').on('response', function(error,resp,body){
+		// 	// console.log(resp.statusCode); // 200
+		// 	// console.log(JSON.stringify(resp));
+		// 	response.send(body);
+		// }).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
+
+		// ==============THE OTHER WAY TO SEND GET REQUEST=================
+		// var callback = function(res){
+		// var body = '';
+		// 	res.on('data', function(data){
+		// 		body += data;
+		// 	});
+		// 	res.on('end', function(){
+		// 	console.log(body);
+		// 	response.send(body);
+		// });
+		// }
+		// var req = http.request('http://google.com', callback);
+		// req.end();
+
+		// BEST WAY TO SEND GET REQUEST SO FAR
+  		request(proxiedHost + webRequest.url, function (error, resp, body) {
+    		if (!error) {
+        		console.log(webRequest.url);
+        		console.log(resp.body);
+        		// response.send(resp.body);
+
+        		response.write(resp.body);
+				response.end();
+
+				// write to local file
         		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
 					if (err) throw err;
 				});
 				fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
 					if (err) throw err;
 				});
-        		response.send(resp.body);
+        		// response.send(resp.body);
     		}
+    		else {
+    			console.log("ERROR!");
+    		}
+
 		});
 		
 		console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
-
 	});
 
 });
