@@ -66,11 +66,11 @@ proxyApp.get('/*', function(webRequest, response) {
 	console.log('GET Request:'+webRequest.url);
 	console.log('GET Headers:'+JSON.stringify(headers));
 
-	webRequest.on('data', function(chunk) {
-		data+=chunk.toString();
-	});
+	// webRequest.on('data', function(chunk) {
+	// 	data+=chunk.toString();
+	// });
 
-	webRequest.on('end', function() {
+	// webRequest.on('end', function() {
 		console.log(data); // data should be nothing here
 		var currentCount = requestCount;
 		requestCount++;
@@ -93,64 +93,75 @@ proxyApp.get('/*', function(webRequest, response) {
 		}
 		console.log('Send Headers:'+JSON.stringify(newHeaders));
 
-		// prepare redirecting request options
-		var options = {
-			uri:proxiedHost + webRequest.url, 
-			// headers: webRequest.headers, 
-			jar:true, 
-			body:data 
-		};
-
-		// ==============THE OTHER WAY TO SEND GET REQUEST=================
-		// request.get('http://google.com').on('response', function(error,resp,body){
-		// 	// console.log(resp.statusCode); // 200
-		// 	// console.log(JSON.stringify(resp));
-		// 	response.send(body);
-		// }).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
-
-		// ==============THE OTHER WAY TO SEND GET REQUEST=================
-		// var callback = function(res){
-		// var body = '';
-		// 	res.on('data', function(data){
-		// 		body += data;
-		// 	});
-		// 	res.on('end', function(){
-		// 	console.log(body);
-		// 	response.send(body);
-		// });
-		// }
-		// var req = http.request('http://google.com', callback);
-		// req.end();
+		function endsWith(str, suffix) {
+    		return str.indexOf(suffix, str.length - suffix.length) !== -1;
+		}
 
 		// BEST WAY TO SEND GET REQUEST SO FAR
-  		request(proxiedHost + webRequest.url, function (error, resp, body) {
-    		if (!error) {
-        		console.log(webRequest.url);
-        		console.log(resp.body);
-        		// response.send(resp.body);
+		if(!endsWith(webRequest.url, 'png')){
+			// prepare redirecting request options
+			var options = {
+				uri:proxiedHost + webRequest.url, 
+				headers: webRequest.headers, 
+				jar:true, 
+			};
 
-        		response.write(resp.body);
-				response.end();
+  			request(options, function (error, resp, body) {
+    			if (!error) {
+        			console.log(webRequest.url);
+        			console.log(resp.body);
+	        		// response.send(resp.body);
 
-				// write to local file
-        		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
-					if (err) throw err;
-				});
-				fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
-					if (err) throw err;
-				});
-        		// response.send(resp.body);
-    		}
-    		else {
-    			console.log("ERROR!");
-    		}
+	        		response.write(resp.body);
+					response.end();
 
-		});
-		
+					// write to local file
+	        		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
+						if (err) throw err;
+					});
+	        		// response.send(resp.body);
+    			}
+    			else {
+    				console.log("ERROR!");
+    			}
+			});
+		}
+		else{
+			console.log('**********'+proxiedHost);
+			options = {
+			    host: 'localhost'
+			  , port: 8080
+			  , path: webRequest.url
+			}
+
+			var request = http.get(options, function(res){
+				var imagedata = ''
+				res.setEncoding('binary')
+
+				res.on('data', function(chunk){
+			    	imagedata += chunk
+			    	// res.pipe(response);
+				})
+
+				res.on('end', function(){
+			    // fs.writeFile('logo.png', imagedata, 'binary', function(err){
+			    // if (err) throw err
+			    //     console.log('File saved.')
+			    // })
+			    // response.writeHead(res.statusCode);
+			    // response.end(imagedata, 'binary');
+			    // res.writeHead(200, {'Content-Type': response.headers['content-type'], 'Content-Length': response.headers['content-length'] });
+			    	response.end(imagedata, 'binary');
+				})
+
+  			})
+		}
 		console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
-	});
 
-});
+	});
 
 proxyApp.post('/*', function(webRequest, response) {
 	var request = require('request');
