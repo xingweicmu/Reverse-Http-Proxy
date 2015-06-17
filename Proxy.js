@@ -25,6 +25,7 @@ process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 //---------------[ Setup Dependencies ]---------------//
 var express = require('express');
+var bodyParser = require("body-parser");
 var http = require('http');
 var path = require('path');
 var os=require('os');
@@ -45,6 +46,7 @@ proxyApp.use(express.methodOverride());
 proxyApp.use(proxyApp.router);
 proxyApp.use(express.static(path.join(__dirname, 'public')));
 proxyApp.use(express.bodyParser());
+proxyApp.use(bodyParser.urlencoded({ extended: false }));
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == proxyApp.get('env')) {
@@ -97,8 +99,8 @@ proxyApp.get('/*', function(webRequest, response) {
     		return str.indexOf(suffix, str.length - suffix.length) !== -1;
 		}
 
-		// BEST WAY TO SEND GET REQUEST SO FAR
-		if(!endsWith(webRequest.url, 'png')){
+		// If it's image
+		if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg')){
 			// prepare redirecting request options
 			var options = {
 				uri:proxiedHost + webRequest.url, 
@@ -129,7 +131,7 @@ proxyApp.get('/*', function(webRequest, response) {
     			}
 			});
 		}
-		else{
+		else{	
 			console.log('**********'+proxiedHost);
 			options = {
 			    host: 'localhost'
@@ -147,14 +149,7 @@ proxyApp.get('/*', function(webRequest, response) {
 				})
 
 				res.on('end', function(){
-			    // fs.writeFile('logo.png', imagedata, 'binary', function(err){
-			    // if (err) throw err
-			    //     console.log('File saved.')
-			    // })
-			    // response.writeHead(res.statusCode);
-			    // response.end(imagedata, 'binary');
-			    // res.writeHead(200, {'Content-Type': response.headers['content-type'], 'Content-Length': response.headers['content-length'] });
-			    	response.end(imagedata, 'binary');
+					response.end(imagedata, 'binary');
 				})
 
   			})
@@ -169,16 +164,25 @@ proxyApp.post('/*', function(webRequest, response) {
 	var headers = webRequest.headers;
 	var currentRequestNum = requestCount;
 	var data = '';
+	var queryBody = webRequest.body;
 	
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
+	console.log('--------------------[ webRequest ]---------------');
+	console.log(webRequest);
+	console.log('--------------------[ queryBody ]---------------');
+	console.log(queryBody);
+	data = JSON.stringify(queryBody);
 
-	webRequest.on('data', function(chunk) {
-		data+=chunk.toString();
-	});
 
-	webRequest.on('end', function() {
+	// webRequest.on('data', function(chunk) {
+	// 	data+=chunk.toString();
+	// 	console.log('POST body:'+data);
+	// });
+
+	// webRequest.on('end', function() {
+		console.log('POST body:'+data);
 		var currentCount = requestCount;
 		requestCount++;
 
@@ -229,12 +233,14 @@ proxyApp.post('/*', function(webRequest, response) {
 		var options = {
 			uri:proxiedHost+webRequest.url
 			//, headers: {"content-type":"text/xml; charset=utf-8","soapaction":"urn:vim25/5.5","user-agent":"VMware vim-java 1.0"}
-			, headers: newHeaders
+			// , headers: newHeaders
+			, headers: webRequest.headers
 			, jar:true
 			, body:data
 		};
 		request.post(options, callback).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
-	});
+		// webRequest.end();
+	// });
 
     console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
