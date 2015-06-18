@@ -2,6 +2,7 @@ var proxiedHost = 'http://127.0.0.1'
 
 var serviceName = 'Inventory';
 var requestCount=0;
+var responseCount=0;
 var listenPort=9999;
 
 process.argv.forEach(function (val, index, array) {
@@ -80,91 +81,102 @@ proxyApp.get('/*', function(webRequest, response) {
 	console.log('GET Request:'+webRequest.url);
 	console.log('GET Headers:'+JSON.stringify(headers));
 
-		console.log(data); // data should be nothing here
-		var currentCount = requestCount;
-		requestCount++;
+	console.log(data); // data should be nothing here
+	var currentCount = requestCount;
+	// requestCount++;
+	console.log('###'+currentCount);
 
-		// rqst - the request sent to the proxy
-		var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
-		// write the request to file 
-		fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
-			if (err) throw err;
-		});
+		// // rqst - the request sent to the proxy
+		// var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
+		// // write the request to file 
+		// fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+		// 	if (err) throw err;
+		// });
 
 		// NEXT - redirect the request to the destination
 		// create a new header - didn't use it in this build
-		var newHeaders = {};
-		for(var key in webRequest.headers) {
-    		var value = webRequest.headers[key];
-			if(key != 'content-length' && key!='host'){		// then what about the host and content-length now?
-				newHeaders[key]=value;
-			}
+	var newHeaders = {};
+	for(var key in webRequest.headers) {
+    	var value = webRequest.headers[key];
+		if(key != 'content-length' && key!='host'){		// then what about the host and content-length now?
+			newHeaders[key]=value;
 		}
-		console.log('Send Headers:'+JSON.stringify(newHeaders));
+	}
+	console.log('Send Headers:'+JSON.stringify(newHeaders));
 
-		function endsWith(str, suffix) {
-    		return str.indexOf(suffix, str.length - suffix.length) !== -1;
+	function endsWith(str, suffix) {
+    	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+	}
+
+	// To handle text 
+	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
+		&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+		// prepare redirecting request options
+		var options = {
+			uri:proxiedHost + webRequest.url, 
+			// headers: webRequest.headers, 
+			jar:true, 
+		};
+		// responseCount++;
+  		request(options, function (error, resp, body) {
+    		if (!error) {
+        		console.log(webRequest.url);
+        		console.log(resp.body);
+	        	// response.send(resp.body);
+	        	// responseCount++;
+	        	requestCount++;
+
+	        	// rqst - the request sent to the proxy
+				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
+				// write the request to file 
+				fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+					if (err) throw err;
+				});
+
+				// write to local file
+	        	fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
+	        		// console.log('Failed request count:'+requestCount + 'response ERROR!!!!!'+JSON.stringify(err));
+					if (err) throw err;
+				});
+				fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
+					// console.log('Failed request count:'+requestCount +'header ERROR!!!!!'+JSON.stringify(err));
+					if (err) throw err;
+				});
+	        	// response.send(resp.body);
+	        	response.write(resp.body);
+				response.end();
+    		}
+    		else {
+    			console.log("ERROR!");
+    		}
+		});
+	}
+	// To handle images or font, which requires to be encoded in binary
+	else{	
+		options = {
+			host: hostName
+			, port: portNumber
+			, path: webRequest.url
+			// uri: proxiedHost + webRequest.url
 		}
 
-		// To handle text 
-		if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
-			&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
-			// prepare redirecting request options
-			var options = {
-				uri:proxiedHost + webRequest.url, 
-				// headers: webRequest.headers, 
-				jar:true, 
-			};
+		var request = http.get(options, function(res){
+			var imagedata = ''
+			res.setEncoding('binary')
 
-  			request(options, function (error, resp, body) {
-    			if (!error) {
-        			console.log(webRequest.url);
-        			console.log(resp.body);
-	        		// response.send(resp.body);
+			res.on('data', function(chunk){
+			    imagedata += chunk
+			})
 
-	        		response.write(resp.body);
-					response.end();
+			res.on('end', function(){
+				response.end(imagedata, 'binary');
+			})
 
-					// write to local file
-	        		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
-						if (err) throw err;
-					});
-	        		// response.send(resp.body);
-    			}
-    			else {
-    				console.log("ERROR!");
-    			}
-			});
-		}
-		// To handle images or font, which requires to be encoded in binary
-		else{	
-			options = {
-			    host: hostName
-			  , port: portNumber
-			  , path: webRequest.url
-			  	// uri: proxiedHost + webRequest.url
-			}
+  		})
+	}
+	console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
-			var request = http.get(options, function(res){
-				var imagedata = ''
-				res.setEncoding('binary')
-
-				res.on('data', function(chunk){
-			    	imagedata += chunk
-				})
-
-				res.on('end', function(){
-					response.end(imagedata, 'binary');
-				})
-
-  			})
-		}
-		console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
-
-	});
+});
 
 proxyApp.post('/*', function(webRequest, response) {
 	var request = require('request');
