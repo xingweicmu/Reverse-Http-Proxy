@@ -197,13 +197,13 @@ proxyApp.post('/*', function(webRequest, response) {
 
 	console.log('POST body:'+data);
 	var currentCount = requestCount;
-	requestCount++;
+	// requestCount++;
 
-	var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+	// var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
 
-	fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
-		if (err) throw err;
-	});
+	// fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+	// 	if (err) throw err;
+	// });
 
 	function callback(error, cbresponse, body) {
     	console.log('--------------------[ endpoint Response '+currentCount+ ' ]---------------');
@@ -219,7 +219,19 @@ proxyApp.post('/*', function(webRequest, response) {
 			}
 		}
 
+		requestCount++;
+
+		var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+
+		fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+			if (err) throw err;
+		});
+
 		fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(rtnHeaders), function (err) {
+  			if (err) throw err;
+		});
+
+		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', body, function (err) {
   			if (err) throw err;
 		});
 
@@ -250,7 +262,8 @@ proxyApp.post('/*', function(webRequest, response) {
 		, jar:true
 		, body:data
 	};
-	request.post(options, callback).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
+	// request.post(options, callback).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
+	request.post(options, callback);
     console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
 });
