@@ -86,15 +86,6 @@ proxyApp.get('/*', function(webRequest, response) {
 	// requestCount++;
 	console.log('###'+currentCount);
 
-		// // rqst - the request sent to the proxy
-		// var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
-		// // write the request to file 
-		// fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
-		// 	if (err) throw err;
-		// });
-
-		// NEXT - redirect the request to the destination
-		// create a new header - didn't use it in this build
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
     	var value = webRequest.headers[key];
@@ -197,13 +188,6 @@ proxyApp.post('/*', function(webRequest, response) {
 
 	console.log('POST body:'+data);
 	var currentCount = requestCount;
-	// requestCount++;
-
-	// var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
-
-	// fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
-	// 	if (err) throw err;
-	// });
 
 	function callback(error, cbresponse, body) {
     	console.log('--------------------[ endpoint Response '+currentCount+ ' ]---------------');
@@ -262,7 +246,7 @@ proxyApp.post('/*', function(webRequest, response) {
 		, jar:true
 		, body:data
 	};
-	// request.post(options, callback).pipe(fs.createWriteStream(serviceName+'/Response'+requestCount+'.txt'),{end:false});
+
 	request.post(options, callback);
     console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
