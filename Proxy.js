@@ -125,7 +125,7 @@ proxyApp.get('/*', function(webRequest, response) {
 				});
 
 				// write to local file
-	        	fs.writeFile(serviceName+'/Response'+requestCount+'.txt', JSON.stringify(resp), function(err) {
+	        	fs.writeFile(serviceName+'/Response'+requestCount+'.txt', body, function(err) {
 	        		// console.log('Failed request count:'+requestCount + 'response ERROR!!!!!'+JSON.stringify(err));
 					if (err) throw err;
 				});
