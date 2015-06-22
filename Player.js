@@ -65,15 +65,13 @@ playerApp.get('/*', function(webRequest, response) {
         // console.log('GET Request:'+webRequest.url);
         var headers = webRequest.headers;
         var url = webRequest.url;
-
+        requestCount++;
 		//-------------[ See if the Request Headers match first request ]------------//
 		var headerMatch = true;
-		// var parsedHeaders = {};
 		var keys = Object.keys(headers);
 		for(var i = 0; i < keys.length; i++){
 			var key = keys[i];
-			if(key != 'host' && key != 'user-agent'){
-				// parsedHeaders[key] = webRequest.headers[key];
+			if(key != 'host' && key != 'user-agent' && key != 'accept-language'){
 				headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
 				if(!headerMatch){
 					headerMatch = false;
@@ -89,6 +87,7 @@ playerApp.get('/*', function(webRequest, response) {
 		// Check the request path, method type, headers to the firstRequest attributes.
 		// If a match is made, resent the requestCount to 1 so that the Response1.txt file is
 		// used to return the response for the request, and continue from there.
+
         if (url === firstRequest.path && headerMatch) {
         	console.log("RESETING COUNTER\n\n"); 
             requestCount = 1;
@@ -96,11 +95,15 @@ playerApp.get('/*', function(webRequest, response) {
 
         fs.readFile(serviceName+'/Response'+requestCount+'.txt', 'utf8', function (err,data) {
   			if (err) {
-    			return console.log(err);
+    			console.log(err);
+    			response.write('No file found: '+err.path);
+    			response.end();
   			}
-			requestCount++;
-			response.write(data);
-			response.end();
+			// requestCount++;
+			else{
+				response.write(data);
+				response.end();
+			}
 		});
 
         console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
@@ -110,6 +113,8 @@ playerApp.get('/*', function(webRequest, response) {
 playerApp.post('/*', function(webRequest, response) {
 	var headers = webRequest.headers;
 	var url = webRequest.url;
+	// Add the request count
+	requestCount++;
 
 	//-------------[ See if the Request Headers match first request ]------------//
 	var headerMatch = true;
@@ -152,18 +157,19 @@ playerApp.post('/*', function(webRequest, response) {
         console.log("RESETING COUNTER\n\n"); 
         requestCount = 1;
     }
+
 	fs.readFile(serviceName+'/Response'+requestCount+'.txt', 'utf8', function (err,data) {
   		if (err) {
-    		return console.log(err);
+    		console.log(err);
+    		response.write('No file found: '+err.path);
+    		response.end();
   		}
-  		// Add the request count
-		requestCount++;
-
 		// Send response back to the client
-		response.write(data);
-		response.end();
-
-    });
+		else{
+			response.write(data);
+			response.end();
+		}
+    });	
 
     console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
 
