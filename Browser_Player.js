@@ -68,7 +68,6 @@ if ('development' == playerApp.get('env')) {
 //---------------[ Setup the Routes ]---------------//
 playerApp.get('/*', function(webRequest, response) {
 
-
 	// var request = require('request').debug=true;
 	// console.log('GET Request:'+webRequest.url);
 	var headers = webRequest.headers;
@@ -80,60 +79,63 @@ playerApp.get('/*', function(webRequest, response) {
 
 	fs.readFile(filePath, 'utf-8', function(err,data) {
   		if (err) {
-    		return console.log(err);
+    		console.log(err);
+			response.write('No Request file found: '+err.path);
+			response.end();
   		}
-
-  		firstRequest = JSON.parse(data);
-  		// console.log(JSON.parse(data));
-        // console.log(filePath+'###'+firstRequest);
-        requestCount++;
-		//-------------[ See if the Request Headers match first request ]------------//
-		// console.log(JSON.stringify(firstRequest.headers));
-		// console.log('========');
-		// console.log(JSON.stringify(webRequest.headers));
-		var headerMatch = true;
-		var keys = Object.keys(headers);
-		for(var i = 0; i < keys.length; i++){
-			var key = keys[i];
-			if(key != 'host' && key != 'user-agent' && key != 'accept-language' && key != 'cookie'){
-				headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
-				if(!headerMatch){
-					console.log('****'+key);
-					headerMatch = false;
-					break;
+  		else {
+	  		firstRequest = JSON.parse(data);
+	  		// console.log(JSON.parse(data));
+	        // console.log(filePath+'###'+firstRequest);
+	        requestCount++;
+			//-------------[ See if the Request Headers match first request ]------------//
+			// console.log(JSON.stringify(firstRequest.headers));
+			// console.log('========');
+			// console.log(JSON.stringify(webRequest.headers));
+			var headerMatch = true;
+			var keys = Object.keys(headers);
+			for(var i = 0; i < keys.length; i++){
+				var key = keys[i];
+				if(key != 'host' && key != 'user-agent' && key != 'accept-language' && key != 'cookie'){
+					headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
+					if(!headerMatch){
+						console.log('****'+key);
+						headerMatch = false;
+						break;
+					}
 				}
 			}
-		}
 
-		console.log('--------------------[ simulation GET Request '+ requestCount + ' ]---------------');
-		console.log('GET Request:'+url);
-		console.log('GET Headers:'+JSON.stringify(webRequest.headers));
+			console.log('--------------------[ simulation GET Request '+ requestCount + ' ]---------------');
+			console.log('GET Request:'+url);
+			console.log('GET Headers:'+JSON.stringify(webRequest.headers));
 
-		// Check the request path, method type, headers to the firstRequest attributes.
-		// If a match is made, resent the requestCount to 1 so that the Response1.txt file is
-		// used to return the response for the request, and continue from there.
-		console.log(url +' VS '+firstRequest.path);
-		console.log(headerMatch);
-        if (url === firstRequest.path && headerMatch) {
-        	console.log("RESETING COUNTER\n\n"); 
-            requestCount = 1;
-        }
+			// Check the request path, method type, headers to the firstRequest attributes.
+			// If a match is made, resent the requestCount to 1 so that the Response1.txt file is
+			// used to return the response for the request, and continue from there.
+			console.log(url +' VS '+firstRequest.path);
+			console.log(headerMatch);
+	        if (url === firstRequest.path && headerMatch) {
+	        	console.log("RESETING COUNTER\n\n"); 
+	            requestCount = 1;
+	        }
 
-        fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
-  			if (err) {
-    			console.log(err);
-    			response.write('No file found: '+err.path);
-    			response.end();
-  			}
-			// requestCount++;
-			else{
-				response.write(data);
-				response.end();
-			}
-		});
+	        fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
+	  			if (err) {
+	    			console.log(err);
+	    			response.write('No Response file found: '+err.path);
+	    			response.end();
+	  			}
+				// requestCount++;
+				else{
+					response.write(data);
+					response.end();
+				}
+			});
 
-        console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
+	        console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
 
+	    	}
         });
 
 });
@@ -141,65 +143,82 @@ playerApp.get('/*', function(webRequest, response) {
 playerApp.post('/*', function(webRequest, response) {
 	var headers = webRequest.headers;
 	var url = webRequest.url;
-	// Add the request count
-	requestCount++;
 
-	//-------------[ See if the Request Headers match first request ]------------//
-	var headerMatch = true;
-	var keys = Object.keys(webRequest.headers);
-	//console.log('Keys:'+JSON.stringify(keys));
-	for(var i=0;i<keys.length;i++){
-		var key = keys[i];
-		//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
-		if(key!="host"&&key!="user-agent"){
-			//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
-			headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
-			if(!headerMatch){
-				break;
-			}
-		}
-	}
-	//console.log('Do Headers Match:'+headerMatch);
+	var filename = url.replace(new RegExp('/', 'g'), '!');
+	var filePath = serviceName + '/Request/' + filename;
 
-    var hdrs = {'headers':headers};
-    var data = '';
-    console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
-	console.log('POST Request:'+url);
-	console.log('POST Headers:'+JSON.stringify(webRequest.headers));
-	console.log('POST Body:'+JSON.stringify(webRequest.body));
-
-    data = JSON.stringify(webRequest.body);
-	console.log('POST Body:\n'+data+'\nAGAINST:\n'+firstRequest.body);
-	var dataMatch = false;
-
-	//----------[ Check body if headers match ]-----------//
-	if(headerMatch){
-		dataMatch = (data==firstRequest.body);
-		console.log('Does Body Match:'+dataMatch);
-	}
-
-    // Check the request path, method type, headers and body to the firstRequest attributes.
-    // If a match is made, resent the requestCount to 1 so that the Response1.txt file is
-    // used to return the response for the request, and continue from there.
-    if (url === firstRequest.path && headerMatch && dataMatch) {
-        console.log("RESETING COUNTER\n\n"); 
-        requestCount = 1;
-    }
-
-	fs.readFile(serviceName+'/Response'+requestCount+'.txt', 'utf8', function (err,data) {
+	fs.readFile(filePath, 'utf-8', function(err,data) {
   		if (err) {
     		console.log(err);
-    		response.write('No file found: '+err.path);
+    		response.write('No Request file found: '+err.path);
     		response.end();
   		}
-		// Send response back to the client
-		else{
-			response.write(data);
-			response.end();
-		}
-    });	
+  		else {
 
-    console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
+	  		firstRequest = JSON.parse(data);
+
+			// Add the request count
+			requestCount++;
+
+			//-------------[ See if the Request Headers match first request ]------------//
+			var headerMatch = true;
+			var keys = Object.keys(webRequest.headers);
+			//console.log('Keys:'+JSON.stringify(keys));
+			for(var i=0;i<keys.length;i++){
+				var key = keys[i];
+				//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
+				if(key!="host" && key!="user-agent" && key != 'accept-language' && key != 'cookie'){
+					//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
+					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
+					if(!headerMatch){
+						headerMatch = false;
+						break;
+					}
+				}
+			}
+			//console.log('Do Headers Match:'+headerMatch);
+
+		    var hdrs = {'headers':headers};
+		    var data = '';
+		    console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
+			console.log('POST Request:'+url);
+			console.log('POST Headers:'+JSON.stringify(webRequest.headers));
+			console.log('POST Body:'+JSON.stringify(webRequest.body));
+
+		    data = JSON.stringify(webRequest.body);
+			console.log('POST Body:\n'+data+'\nAGAINST:\n'+firstRequest.body);
+			var dataMatch = false;
+
+			//----------[ Check body if headers match ]-----------//
+			if(headerMatch){
+				dataMatch = (data==firstRequest.body);
+				console.log('Does Body Match:'+dataMatch);
+			}
+
+		    // Check the request path, method type, headers and body to the firstRequest attributes.
+		    // If a match is made, resent the requestCount to 1 so that the Response1.txt file is
+		    // used to return the response for the request, and continue from there.
+		    if (url === firstRequest.path && headerMatch && dataMatch) {
+		        console.log("RESETING COUNTER\n\n"); 
+		        requestCount = 1;
+		    }
+
+			fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
+		  		if (err) {
+		    		console.log(err);
+		    		response.write('No Response file found: '+err.path);
+		    		response.end();
+		  		}
+				// Send response back to the client
+				else{
+					response.write(data);
+					response.end();
+				}
+		    });	
+
+		    console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
+		}
+	});
 
 });
 
