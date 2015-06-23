@@ -102,6 +102,8 @@ proxyApp.get('/*', function(webRequest, response) {
     	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 	}
 
+	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
+	console.log('@@@'+filePath);
 	// To handle text 
 	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
 		&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
@@ -111,8 +113,8 @@ proxyApp.get('/*', function(webRequest, response) {
 			// headers: webRequest.headers, 
 			jar:true, 
 		};
-		var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
-		console.log('***'+filePath);
+		// var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
+		// console.log('***'+filePath);
 		// responseCount++;
   		request(options, function (error, resp, body) {
     		if (!error) {
@@ -165,6 +167,17 @@ proxyApp.get('/*', function(webRequest, response) {
 			})
 
 			res.on('end', function(){
+
+				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
+				// write the request to file 
+				fs.writeFile(serviceName+'/Request/'+filePath, JSON.stringify(rqst), function(err) {
+					if (err) throw err;
+				});
+
+				fs.writeFile(serviceName+'/Response/'+filePath, imagedata, 'binary', function(err){
+            		if (err) throw err
+            		console.log('File saved.')
+        		})
 				response.end(imagedata, 'binary');
 			})
 

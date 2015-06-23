@@ -120,18 +120,34 @@ playerApp.get('/*', function(webRequest, response) {
 	            requestCount = 1;
 	        }
 
-	        fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
-	  			if (err) {
-	    			console.log(err);
-	    			response.write('No Response file found: '+err.path);
-	    			response.end();
-	  			}
-				// requestCount++;
-				else{
-					response.write(data);
-					response.end();
-				}
-			});
+	        var responseFilePath = filePath.replace('Request', 'Response');
+	        function endsWith(str, suffix) {
+    			return str.indexOf(suffix, str.length - suffix.length) !== -1;
+			}
+			// If it's text
+	        if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
+	        	&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+
+		        fs.readFile(responseFilePath, 'utf8', function (err,data) {
+		  			if (err) {
+		    			console.log(err);
+		    			response.write('No Response file found: '+err.path);
+		    			response.end();
+		  			}
+					// requestCount++;
+					else{
+						console.log("TEXT");
+						response.write(data);
+						response.end();
+					}
+				});
+			}
+			// If it's image or woff, it should be encoded in binary
+			else{
+				var img = fs.readFileSync(responseFilePath);
+				// res.writeHead(200, {'Content-Type': 'image/gif' });
+				response.end(img, 'binary');
+			}
 
 	        console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
 
@@ -146,6 +162,7 @@ playerApp.post('/*', function(webRequest, response) {
 
 	var filename = url.replace(new RegExp('/', 'g'), '!');
 	var filePath = serviceName + '/Request/' + filename;
+	// console.log("@@@"+filename + "@@@" + filePath);
 
 	fs.readFile(filePath, 'utf-8', function(err,data) {
   		if (err) {
