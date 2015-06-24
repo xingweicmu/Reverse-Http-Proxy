@@ -77,6 +77,10 @@ playerApp.get('/*', function(webRequest, response) {
 	var filePath = serviceName + '/Request/' + filename;
 	// var firstRequest = readFromFile(serviceName+'/Request/!');
 
+	// Basiclly, it handles three possible exceptions in handling GET request:
+	// 1. No Request file found. (request url is different)
+	// 2. No Match File Found with the same headers. (request url is the same, but headers are different)
+	// 3. No Response file found. (response file with the url is missing)
 	fs.readFile(filePath, 'utf-8', function(err,data) {
   		if (err) {
     		console.log(err);
@@ -87,7 +91,10 @@ playerApp.get('/*', function(webRequest, response) {
 	  		firstRequest = JSON.parse(data);
 	  		// console.log(JSON.parse(data));
 	        // console.log(filePath+'###'+firstRequest);
-	        requestCount++;
+	        
+	        // The count does not take effect in this version
+	        requestCount++;		
+
 			//-------------[ See if the Request Headers match first request ]------------//
 			// console.log(JSON.stringify(firstRequest.headers));
 			// console.log('========');
@@ -96,7 +103,8 @@ playerApp.get('/*', function(webRequest, response) {
 			var keys = Object.keys(headers);
 			for(var i = 0; i < keys.length; i++){
 				var key = keys[i];
-				if(key != 'host' && key != 'user-agent' && key != 'accept-language' && key != 'cookie'){
+				if(key != 'host' && key != 'user-agent' && key != 'accept-language' && key != 'cookie' 
+					&& key != 'referer' && key != 'accept'){
 					headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
 					if(!headerMatch){
 						console.log('****'+key);
@@ -111,42 +119,50 @@ playerApp.get('/*', function(webRequest, response) {
 			console.log('GET Headers:'+JSON.stringify(webRequest.headers));
 
 			// Check the request path, method type, headers to the firstRequest attributes.
-			// If a match is made, resent the requestCount to 1 so that the Response1.txt file is
-			// used to return the response for the request, and continue from there.
+			// If a match is made, return the response for the request.
 			console.log(url +' VS '+firstRequest.path);
-			console.log(headerMatch);
+			console.log('Does headers match: '+headerMatch);
 	        if (url === firstRequest.path && headerMatch) {
+	        	// No use for this version
 	        	console.log("RESETING COUNTER\n\n"); 
 	            requestCount = 1;
-	        }
+	        
+				var responseFilePath = filePath.replace('Request', 'Response');
+		        function endsWith(str, suffix) {
+	    			return str.indexOf(suffix, str.length - suffix.length) !== -1;
+				}
+				// If it's text
+		        if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
+		        	&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
 
-	        var responseFilePath = filePath.replace('Request', 'Response');
-	        function endsWith(str, suffix) {
-    			return str.indexOf(suffix, str.length - suffix.length) !== -1;
-			}
-			// If it's text
-	        if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
-	        	&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+					fs.readFile(responseFilePath, 'utf8', function (err,data) {
+			  			if (err) {
+			    			console.log(err);
+			    			response.write('No Response file found: '+err.path);
+			    			response.end();
+			  			}
+						// requestCount++;
+						else{
+							console.log("TEXT");
+							response.write(data);
+							response.end();
+						}
+					});
+				}
+				// Or if it's image or woff, it should be encoded in binary
+				else{
+					// May need to handle exceptions here for reading images
+					var img = fs.readFileSync(responseFilePath);
+					// res.writeHead(200, {'Content-Type': 'image/gif' });
+					response.end(img, 'binary');
+				}
 
-		        fs.readFile(responseFilePath, 'utf8', function (err,data) {
-		  			if (err) {
-		    			console.log(err);
-		    			response.write('No Response file found: '+err.path);
-		    			response.end();
-		  			}
-					// requestCount++;
-					else{
-						console.log("TEXT");
-						response.write(data);
-						response.end();
-					}
-				});
-			}
-			// If it's image or woff, it should be encoded in binary
-			else{
-				var img = fs.readFileSync(responseFilePath);
-				// res.writeHead(200, {'Content-Type': 'image/gif' });
-				response.end(img, 'binary');
+			}else{
+				console.log('No Match File Found');
+				console.log('URLMatch: '+ (url === firstRequest.path));
+				console.log('headerMatch: '+ headerMatch);
+				response.write('No Match File Found with the same headers');
+				response.end();
 			}
 
 	        console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
@@ -175,6 +191,7 @@ playerApp.post('/*', function(webRequest, response) {
 	  		firstRequest = JSON.parse(data);
 
 			// Add the request count
+			// No use in this version
 			requestCount++;
 
 			//-------------[ See if the Request Headers match first request ]------------//
@@ -184,16 +201,18 @@ playerApp.post('/*', function(webRequest, response) {
 			for(var i=0;i<keys.length;i++){
 				var key = keys[i];
 				//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
-				if(key!="host" && key!="user-agent" && key != 'accept-language' && key != 'cookie'){
+				if(key!="host" && key!="user-agent" && key != 'accept-language' && key != 'cookie' && key != 'accept'){
 					//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
 					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
 					if(!headerMatch){
+						console.log('Different Key: ' + key);
+						console.log('See detail: ' + webRequest.headers[key] + " VS " + firstRequest.headers[key]);
 						headerMatch = false;
 						break;
 					}
 				}
 			}
-			//console.log('Do Headers Match:'+headerMatch);
+			console.log('Do Headers Match:'+headerMatch);
 
 		    var hdrs = {'headers':headers};
 		    var data = '';
@@ -213,25 +232,34 @@ playerApp.post('/*', function(webRequest, response) {
 			}
 
 		    // Check the request path, method type, headers and body to the firstRequest attributes.
-		    // If a match is made, resent the requestCount to 1 so that the Response1.txt file is
-		    // used to return the response for the request, and continue from there.
+		    // If a match is made, return the response for the request.
 		    if (url === firstRequest.path && headerMatch && dataMatch) {
+		    	// The counter is no use for this version
 		        console.log("RESETING COUNTER\n\n"); 
 		        requestCount = 1;
-		    }
+		    
+		        // If there is a match, read the file and send the response back
+				fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
+			  		if (err) {
+			    		console.log(err);
+			    		response.write('No Response file found: '+err.path);
+			    		response.end();
+			  		}
+					// Send response back to the client
+					else{
+						response.write(data);
+						response.end();
+					}
+			    });	
 
-			fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
-		  		if (err) {
-		    		console.log(err);
-		    		response.write('No Response file found: '+err.path);
-		    		response.end();
-		  		}
-				// Send response back to the client
-				else{
-					response.write(data);
-					response.end();
-				}
-		    });	
+			}else{
+				console.log('No Match File Found');
+				console.log('URLMatch: '+ (url === firstRequest.path));
+				console.log('headerMatch: '+ headerMatch);
+				console.log('dataMatch:' + dataMatch);
+				response.write('No Match File Found with the same headers and body');
+				response.end();
+			}
 
 		    console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
 		}
