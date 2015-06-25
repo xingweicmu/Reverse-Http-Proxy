@@ -45,6 +45,9 @@ var os=require('os');
 var fs = require('fs');
 
 fs.mkdir(serviceName,function(){});
+fs.mkdir(serviceName+'/Request',function(){});
+fs.mkdir(serviceName+'/Response',function(){});
+fs.mkdir(serviceName+'/ResponseHeader',function(){});
 
 //---------------[ Create the Application ]---------------//
 var proxyApp = express();
@@ -105,7 +108,8 @@ proxyApp.get('/*', function(webRequest, response) {
 		// prepare redirecting request options
 		var options = {
 			uri:proxiedHost + webRequest.url, 
-			// headers: webRequest.headers, 
+			headers: webRequest.headers, 
+			// headers: newHeaders, 
 			jar:true, 
 		};
 		// responseCount++;
@@ -120,16 +124,16 @@ proxyApp.get('/*', function(webRequest, response) {
 	        	// rqst - the request sent to the proxy
 				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
 				// write the request to file 
-				fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+				fs.writeFile(serviceName+'/Request/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
 					if (err) throw err;
 				});
 
 				// write to local file
-	        	fs.writeFile(serviceName+'/Response'+requestCount+'.txt', body, function(err) {
+	        	fs.writeFile(serviceName+'/Response/Response'+requestCount+'.txt', body, function(err) {
 	        		// console.log('Failed request count:'+requestCount + 'response ERROR!!!!!'+JSON.stringify(err));
 					if (err) throw err;
 				});
-				fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
+				fs.writeFile(serviceName+'/ResponseHeader/ResponseHeader'+requestCount+'.txt', JSON.stringify(resp.headers), function(err) {
 					// console.log('Failed request count:'+requestCount +'header ERROR!!!!!'+JSON.stringify(err));
 					if (err) throw err;
 				});
@@ -207,15 +211,15 @@ proxyApp.post('/*', function(webRequest, response) {
 
 		var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
 
-		fs.writeFile(serviceName+'/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
+		fs.writeFile(serviceName+'/Request/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
 			if (err) throw err;
 		});
 
-		fs.writeFile(serviceName+'/ResponseHeader'+requestCount+'.txt', JSON.stringify(rtnHeaders), function (err) {
+		fs.writeFile(serviceName+'/ResponseHeader/ResponseHeader'+requestCount+'.txt', JSON.stringify(rtnHeaders), function (err) {
   			if (err) throw err;
 		});
 
-		fs.writeFile(serviceName+'/Response'+requestCount+'.txt', body, function (err) {
+		fs.writeFile(serviceName+'/Response/Response'+requestCount+'.txt', body, function (err) {
   			if (err) throw err;
 		});
 
@@ -243,6 +247,7 @@ proxyApp.post('/*', function(webRequest, response) {
 		//, headers: {"content-type":"text/xml; charset=utf-8","soapaction":"urn:vim25/5.5","user-agent":"VMware vim-java 1.0"}
 		// , headers: newHeaders
 		, headers: webRequest.headers
+		// , headers: newHeaders
 		, jar:true
 		, body:data
 	};

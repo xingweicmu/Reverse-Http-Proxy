@@ -46,7 +46,7 @@ playerApp.use(bodyParser.urlencoded({ extended: false }));
 // Read the first request file (which will always be Request1.txt) and get the path, method, headers and body to use for comparison on every
 // other request coming in. If a match is made on all 4 parts of the incoming request to the request in the Request1.txt file, reset the
 // reqestCount to 1 and start again, so the proper responses are returned in the same order the requests are coming in.
-fs.readFile(serviceName+'/Request1.txt', 'utf-8', function(err,data) {
+fs.readFile(serviceName+'/Request/Request1.txt', 'utf-8', function(err,data) {
   if (err) {
     return console.log(err);
   }
@@ -71,9 +71,12 @@ playerApp.get('/*', function(webRequest, response) {
 		var keys = Object.keys(headers);
 		for(var i = 0; i < keys.length; i++){
 			var key = keys[i];
-			if(key != 'host' && key != 'user-agent' && key != 'accept-language'){
+			if(key != 'host' && key != 'user-agent' && key != 'accept-language'
+				&& key != 'cookie' && key != 'accept' && key !='referer'){
 				headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
 				if(!headerMatch){
+					console.log('@@@'+key);
+					console.log(webRequest.headers[key] + ' VS ' + firstRequest.headers[key]);
 					headerMatch = false;
 					break;
 				}
@@ -93,7 +96,7 @@ playerApp.get('/*', function(webRequest, response) {
             requestCount = 1;
         }
 
-        fs.readFile(serviceName+'/Response'+requestCount+'.txt', 'utf8', function (err,data) {
+        fs.readFile(serviceName+'/Response/Response'+requestCount+'.txt', 'utf8', function (err,data) {
   			if (err) {
     			console.log(err);
     			response.write('No file found: '+err.path);
@@ -158,7 +161,7 @@ playerApp.post('/*', function(webRequest, response) {
         requestCount = 1;
     }
 
-	fs.readFile(serviceName+'/Response'+requestCount+'.txt', 'utf8', function (err,data) {
+	fs.readFile(serviceName+'/Response/Response'+requestCount+'.txt', 'utf8', function (err,data) {
   		if (err) {
     		console.log(err);
     		response.write('No file found: '+err.path);
