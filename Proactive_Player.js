@@ -72,23 +72,30 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 	console.log(requestList);
 
 	console.log(requestList);
-	for(var num in requestList){
+	// console.log(requestList[9]);
+	// for(var num in requestList){
 
-		// function waitAndDo(times) {
-  // 			if(times < 1) {
-  //   			return;
-  // 			}
+		function waitAndDo(times) {
+  			if(times > requestList.length) {
+    			return;
+  			}
 
-  // 			setTimeout(function() {
+  			setTimeout(function() {
 
-  //   			// Do something here
-  //   			console.log('Doing a request on '+times);
+    			// Do something here
+    			console.log('Doing a request on '+times);
+    			readAndSend(times);
+    			waitAndDo(times+1);
 
-  //   			waitAndDo(times-1);
-  // 			}, 1000);
-		// }
-		// waitAndDo(5);
-		fs.readFile(serviceName+'/Request/'+requestList[num], 'utf-8', function(err,data) {
+  			}, 1000);
+		}
+		// console.log(requestList[10]);
+		waitAndDo(1);
+
+	// readAndSend(2);
+	function readAndSend(num){
+		console.log(num);
+		fs.readFile(serviceName+'/Request/Request'+num+'.txt', 'utf-8', function(err,data) {
 			if (err) {
 		    	return console.log(err);
 		  	}
@@ -108,7 +115,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 			for(var key in readHeaders) {
 		    	var value = readHeaders[key];
 				//console.log('HEADER:'+key+':'+value);
-				if(key != 'content-length' && key!='host' && key != 'referer' && key != 'cookie'){
+				if(key != 'content-length' && key!='host' && key != 'referer'){
 					newHeaders[key]=value;
 				}
 			}
@@ -123,6 +130,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 					};
 			  		request(options, function (error, resp, body) {
 			    		if (!error) {
+			    			console.log(readMethod + ' ' +readPath);
 			    			console.log('---------------[ Response from Server ]---------------');
 			       			console.log(resp.body);
 			       		}
@@ -154,5 +162,6 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 			    }
 			}
 		});
+	// }
 	}
 });
