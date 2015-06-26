@@ -130,7 +130,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 					};
 			  		request(options, function (error, resp, body) {
 			    		if (!error) {
-			    			console.log(readMethod + ' ' +readPath);
+			    			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
 			    			console.log('---------------[ Response from Server ]---------------');
 			       			console.log(resp.body);
 			       		}
@@ -149,6 +149,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 			    	request.post(options, function (error, resp, body) {
 			    		if (!error) {
 			    			console.log(options);
+			    			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
 			    			console.log('---------------[ Response from Server ]---------------');
 			       			console.log(body);
 			       		}

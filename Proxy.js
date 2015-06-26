@@ -104,7 +104,7 @@ proxyApp.get('/*', function(webRequest, response) {
 
 	// To handle text 
 	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
-		&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+		&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff') && !endsWith(webRequest.url, 'ico')){
 		// prepare redirecting request options
 		var options = {
 			uri:proxiedHost + webRequest.url, 
