@@ -69,32 +69,26 @@ var requestList = null;
 fs.readdir(serviceName+'/Request', function(err, list) {
 	if (err) return console.log(err);
 	requestList = list;
-	console.log(requestList);
 
-	console.log(requestList);
-	// console.log(requestList[9]);
-	// for(var num in requestList){
+	function waitAndDo(times) {
+		if(times > requestList.length) {
+			return;
+		}
 
-		function waitAndDo(times) {
-  			if(times > requestList.length) {
-    			return;
-  			}
-
-  			setTimeout(function() {
+		setTimeout(function() {
 
     			// Do something here
-    			console.log('Doing a request on '+times);
-    			readAndSend(times);
-    			waitAndDo(times+1);
+			console.log('******* Doing a request on '+times+' *******');
+			readAndSend(times);
+			waitAndDo(times+1);
 
-  			}, 1000);
-		}
-		// console.log(requestList[10]);
-		waitAndDo(1);
+		}, 500);
+	}
+		
+	waitAndDo(1);
 
-	// readAndSend(2);
 	function readAndSend(num){
-		console.log(num);
+		// console.log(num);
 		fs.readFile(serviceName+'/Request/Request'+num+'.txt', 'utf-8', function(err,data) {
 			if (err) {
 		    	return console.log(err);
@@ -115,7 +109,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 			for(var key in readHeaders) {
 		    	var value = readHeaders[key];
 				//console.log('HEADER:'+key+':'+value);
-				if(key != 'content-length' && key!='host' && key != 'referer'){
+				if(key != 'content-length' && key!='host'){
 					newHeaders[key]=value;
 				}
 			}
@@ -126,7 +120,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 				if(readMethod == 'GET' || readMethod == 'get'){
 					var options = {
 						uri:proxiedHost + readPath
-						, headers: newHeaders
+						// , headers: newHeaders
 					};
 			  		request(options, function (error, resp, body) {
 			    		if (!error) {
@@ -149,7 +143,7 @@ fs.readdir(serviceName+'/Request', function(err, list) {
 			    	request.post(options, function (error, resp, body) {
 			    		if (!error) {
 			    			console.log(options);
-			    			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
+			    			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+']----------------');
 			    			console.log('---------------[ Response from Server ]---------------');
 			       			console.log(body);
 			       		}
