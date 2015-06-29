@@ -122,7 +122,7 @@ proxyApp.get('/*', function(webRequest, response) {
 	        	requestCount++;
 
 	        	// rqst - the request sent to the proxy
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers, 'body':data};
+				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
 				// write the request to file 
 				fs.writeFile(serviceName+'/Request/Request'+requestCount+'.txt', JSON.stringify(rqst), function(err) {
 					if (err) throw err;
