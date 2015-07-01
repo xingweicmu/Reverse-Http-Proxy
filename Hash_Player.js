@@ -212,7 +212,7 @@ playerApp.get('/*', function(webRequest, response) {
 
 			}else{
 				console.log('No Match File Found');
-				console.log('URLMatch: '+ (url === firstRequest.path));
+				console.log('URLMatch: '+ (url == firstRequest.path));
 				console.log('headerMatch: '+ headerMatch);
 				response.write('No Match File Found with the same headers');
 				response.end();
@@ -230,9 +230,20 @@ playerApp.post('/*', function(webRequest, response) {
 	var headers = webRequest.headers;
 	var url = webRequest.url;
 
-	var filename = url.replace(new RegExp('/', 'g'), '!');
-	var filePath = serviceName + '/Request/' + filename;
+	// var filename = url.replace(new RegExp('/', 'g'), '!');
+	// var filePath = serviceName + '/Request/' + filename;
 	// console.log("@@@"+filename + "@@@" + filePath);
+
+	var url = webRequest.url;
+	var filename = url.replace(new RegExp('/', 'g'), '!');
+	// parse the request first
+	var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
+	// var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
+	var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+	var hash_path = hash + '_' + filename;
+	console.log('HASH_PATH:'+hash_path);
+	var filePath = serviceName + '/'+map.get(hash_path)+'/Request';
+	console.log('FILE_PATH:'+filePath);
 
 	fs.readFile(filePath, 'utf-8', function(err,data) {
   		if (err) {
@@ -287,7 +298,9 @@ playerApp.post('/*', function(webRequest, response) {
 
 		    // Check the request path, method type, headers and body to the firstRequest attributes.
 		    // If a match is made, return the response for the request.
-		    if (url === firstRequest.path && headerMatch && dataMatch) {
+		    // if (url == firstRequest.path && headerMatch && dataMatch) {
+		    	//////////////////////////////////////////////////////////
+		    if (headerMatch && dataMatch) {
 		    	// The counter is no use for this version
 		        console.log("RESETING COUNTER\n\n"); 
 		        requestCount = 1;
@@ -308,7 +321,9 @@ playerApp.post('/*', function(webRequest, response) {
 
 			}else{
 				console.log('No Match File Found');
-				console.log('URLMatch: '+ (url === firstRequest.path));
+				console.log('URLMatch: '+ (url == firstRequest.path));
+				console.log(url);
+				console.log(firstRequest.path);
 				console.log('headerMatch: '+ headerMatch);
 				console.log('dataMatch:' + dataMatch);
 				response.write('No Match File Found with the same headers and body');

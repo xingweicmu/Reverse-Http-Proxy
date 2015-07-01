@@ -164,6 +164,7 @@ proxyApp.get('/*', function(webRequest, response) {
 			host: hostName
 			, port: portNumber
 			, path: webRequest.url
+					, jar:true
 			// uri: proxiedHost + webRequest.url
 		}
 
@@ -252,22 +253,33 @@ proxyApp.post('/*', function(webRequest, response) {
 		var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 		var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
 
-		fs.writeFile(serviceName+'/Request/'+filePath, JSON.stringify(rqst), function(err) {
-			if (err) throw err;
-		});
+		// 1. Normalize the request
+		var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
+		// 2. Do Hash
+		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+		// 3. Create foldername in the format of num-hash-path
+		var foldername = requestCount + '_' + hash + '_' + filePath;
+		console.log(foldername);
+		// 4. Create folder
+		fs.mkdir(serviceName+'/'+foldername,function(){
+			// 5. Write file
+			fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+				if (err) throw err;
+			});
 
-		fs.writeFile(serviceName+'/ResponseHeader/'+filePath, JSON.stringify(rtnHeaders), function (err) {
-  			if (err) throw err;
-		});
+			fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(rtnHeaders), function (err) {
+	  			if (err) throw err;
+			});
 
-		fs.writeFile(serviceName+'/Response/'+filePath, body, function (err) {
-  			if (err) throw err;
-		});
+			fs.writeFile(serviceName+'/'+foldername+'/Response', body, function (err) {
+	  			if (err) throw err;
+			});
 
-		console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-		response.writeHead(cbresponse.statusCode,cbheaders);
-		response.write(body);
-		response.end();
+			console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
+			response.writeHead(cbresponse.statusCode,cbheaders);
+			response.write(body);
+			response.end();
+		});
 
         console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
 	};
