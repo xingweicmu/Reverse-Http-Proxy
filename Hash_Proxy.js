@@ -45,9 +45,9 @@ var os=require('os');
 var fs = require('fs');
 
 fs.mkdir(serviceName,function(){});
-fs.mkdir(serviceName+'/Request',function(){});
-fs.mkdir(serviceName+'/Response',function(){});
-fs.mkdir(serviceName+'/ResponseHeader',function(){});
+// fs.mkdir(serviceName+'/Request',function(){});
+// fs.mkdir(serviceName+'/Response',function(){});
+// fs.mkdir(serviceName+'/ResponseHeader',function(){});
 
 //---------------[ Create the Application ]---------------//
 var proxyApp = express();
