@@ -266,7 +266,8 @@ playerApp.post('/*', function(webRequest, response) {
 			for(var i=0;i<keys.length;i++){
 				var key = keys[i];
 				//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
-				if(key!="host" && key!="user-agent" && key != 'accept-language' && key != 'cookie' && key != 'accept'){
+				if(key!="host" && key!="user-agent" && key != 'accept-language' 
+					&& key != 'cookie' && key != 'accept' && key != 'content-length'){
 					//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
 					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
 					if(!headerMatch){

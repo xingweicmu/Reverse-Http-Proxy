@@ -164,7 +164,7 @@ proxyApp.get('/*', function(webRequest, response) {
 			host: hostName
 			, port: portNumber
 			, path: webRequest.url
-					, jar:true
+			, jar:true
 			// uri: proxiedHost + webRequest.url
 		}
 
@@ -243,10 +243,15 @@ proxyApp.post('/*', function(webRequest, response) {
 		for(var key in cbheaders) {
     		var value = cbheaders[key];
 			//console.log('HEADER:'+key+':'+value);
-			if(key!='content-length'&&key!='host'){
+			// if(key!='content-length'&&key!='host' ){
+			if(key!='content-length'&&key!='host' && key != 'location'){
 				rtnHeaders[key]=value;
 			}
 		}
+		////////////////////////////////
+		// the 'location' should be the host name running the player
+		console.log('http://'+hostName+':'+listenPort+'/');
+		rtnHeaders['location']='http://localhost:'+listenPort+'/';
 
 		requestCount++;
 
@@ -276,7 +281,8 @@ proxyApp.post('/*', function(webRequest, response) {
 			});
 
 			console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-			response.writeHead(cbresponse.statusCode,cbheaders);
+			// response.writeHead(cbresponse.statusCode,cbheaders);
+			response.writeHead(cbresponse.statusCode,rtnHeaders);
 			response.write(body);
 			response.end();
 		});
