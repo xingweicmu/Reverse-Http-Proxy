@@ -170,7 +170,7 @@ playerApp.get('/*', function(webRequest, response) {
 			for(var i = 0; i < keys.length; i++){
 				var key = keys[i];
 				if(key != 'host' && key != 'user-agent' && key != 'accept-language' && key != 'cookie' 
-					&& key != 'referer' && key != 'accept'){
+					&& key != 'referer' && key != 'accept' && key != 'accept-encoding'){
 					headerMatch = (webRequest.headers[key] == firstRequest.headers[key]);
 					if(!headerMatch){
 						console.log('****'+key);
@@ -282,7 +282,8 @@ playerApp.post('/*', function(webRequest, response) {
 				var key = keys[i];
 				//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
 				if(key!="host" && key!="user-agent" && key != 'accept-language' 
-					&& key != 'cookie' && key != 'accept' && key != 'content-length'){
+					&& key != 'cookie' && key != 'accept' && key != 'content-length' 
+					&& key != 'accept-encoding'){
 					//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
 					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
 					if(!headerMatch){
