@@ -93,9 +93,12 @@ playerApp.get('/*', function(webRequest, response) {
 	var filename = url.replace(new RegExp('/', 'g'), '!');
 	// parse the request first
 	var normalized = {'path':webRequest.path, 'method':'get'};
+	// var cookie = webRequest.headers['cookie'];
+	// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 	var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 	var hash_path = hash + '_' + filename;
-	console.log(hash_path);
+	console.log('!!!!'+JSON.stringify(normalized));
+	console.log('!!!!'+hash_path);
 
 	// read all the names in the folder
 	// var requestList = null;

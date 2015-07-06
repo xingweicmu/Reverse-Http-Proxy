@@ -123,13 +123,16 @@ proxyApp.get('/*', function(webRequest, response) {
 
 	        	// rqst - the request sent to the proxy
 				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
+
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'get'};
+				// var cookie = webRequest.headers['cookie'];
+				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
-				console.log(foldername);
+				// console.log('FILE_NAME: '+foldername);
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
 					// 5. Write to the file
@@ -182,6 +185,8 @@ proxyApp.get('/*', function(webRequest, response) {
 				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'get'};
+				// var cookie = webRequest.headers['cookie'];
+				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				// 3. Create foldername in the format of num-hash-path
