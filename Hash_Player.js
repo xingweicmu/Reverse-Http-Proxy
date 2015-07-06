@@ -50,6 +50,7 @@ playerApp.use(bodyParser.urlencoded({ extended: false }));
 
 var requestList = null;
 var map = new HashMap();
+var sortMap = new HashMap();
 function readFromFile(filename) {
 	// fs.readFile(serviceName+'/Request/!', 'utf-8', function(err,data) {
 	fs.readFile(filename, 'utf-8', function(err,data) {
@@ -72,11 +73,22 @@ if ('development' == playerApp.get('env')) {
 		if (err) return console.log(err);
 		requestList = list;
 		console.log('in ' + requestList);
-		// Put the filenames to the hashmap
-		
+		// First to sort the requestList, put them in sortMap
 		for (var i = 0; i < requestList.length; i++) {
-			var key = requestList[i].substring(requestList[i].indexOf('_')+1);
+			var key = requestList[i].substring(0, requestList[i].indexOf('_'));
 			var value = requestList[i];
+			sortMap.set(key, value);
+			console.log(key + ' ' + value);
+		}
+
+		console.log('======================================');
+		// Second Put the filenames to the hashmap in sequence
+		for (var i = 0; i < requestList.length; i++) {
+			// console.log(sortMap.count());
+			var index = (i+1) + '';
+			// console.log(index);
+			var key = sortMap.get(index).substring(sortMap.get(index).indexOf('_')+1);
+			var value = sortMap.get(index);
 			map.set(key, value);
 			console.log(key + ' ' + value);
 		}
