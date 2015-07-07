@@ -132,9 +132,11 @@ function readAndSend(num){
 		    var value = readHeaders[key];
 			//console.log('HEADER:'+key+':'+value);
 			if(key != 'content-length' && key!='host'){
+			// if(key != 'cookie'){
 				newHeaders[key]=value;
 			}
 		}
+		// console.log(newHeaders);
 		sendRequest();
 	
 		// If it's GET
@@ -142,7 +144,8 @@ function readAndSend(num){
 			if(readMethod == 'GET' || readMethod == 'get'){
 				var options = {
 					uri:proxiedHost + readPath
-					// , headers: newHeaders
+					, headers: newHeaders
+					, jar: true
 				};
 		  		request(options, function (error, resp, body) {
 			    	if (!error) {
@@ -161,10 +164,11 @@ function readAndSend(num){
 					uri:proxiedHost + readPath
 					, headers: newHeaders
 					, body:readBody
+					, jar: true
 				};
 			    request.post(options, function (error, resp, body) {
 			   		if (!error) {
-			   			console.log(options);
+			   			// console.log(options);
 			   			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+']----------------');
 			   			console.log('---------------[ Response from Server ]---------------');
 		       			console.log(body);
