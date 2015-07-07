@@ -6,7 +6,6 @@ var responseCount=0;
 var listenPort=9999;
 
 process.argv.forEach(function (val, index, array) {
-  	//console.log(index + ': ' + val);
 	if(index==2){
 		proxiedHost=val;
 	}
@@ -44,10 +43,8 @@ var path = require('path');
 var os=require('os');
 var fs = require('fs');
 
+//---------------[ Create the Folder ]---------------//
 fs.mkdir(serviceName,function(){});
-// fs.mkdir(serviceName+'/Request',function(){});
-// fs.mkdir(serviceName+'/Response',function(){});
-// fs.mkdir(serviceName+'/ResponseHeader',function(){});
 
 //---------------[ Create the Application ]---------------//
 var proxyApp = express();
@@ -84,15 +81,14 @@ proxyApp.get('/*', function(webRequest, response) {
 	console.log('GET Request:'+webRequest.url);
 	console.log('GET Headers:'+JSON.stringify(headers));
 
-	console.log(data); // data should be nothing here
 	var currentCount = requestCount;
-	// requestCount++;
 	console.log('###'+currentCount);
 
+	// Create new headers based on webReqeust.headers by removing browser-based info
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
     	var value = webRequest.headers[key];
-		if(key != 'content-length' && key!='host'){		// then what about the host and content-length now?
+		if(key != 'content-length' && key!='host'){
 			newHeaders[key]=value;
 		}
 	}
@@ -102,12 +98,15 @@ proxyApp.get('/*', function(webRequest, response) {
     	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 	}
 
+	// Prepare file path by replacing the '/' with '!'
 	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 	console.log('@@@'+filePath);
-	// To handle text 
+
+	// Handle text-based content
 	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
 		&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
-		// prepare redirecting request options
+		
+		// Prepare redirecting request options
 		var options = {
 			uri:proxiedHost + webRequest.url, 
 			// headers: webRequest.headers, 
@@ -118,7 +117,8 @@ proxyApp.get('/*', function(webRequest, response) {
     		if (!error) {
         		console.log(webRequest.url);
         		console.log(resp.body);
-	        	// response.send(resp.body);
+
+        		// Add the count by one after receiving the response
 	        	requestCount++;
 
 	        	// rqst - the request sent to the proxy
@@ -128,20 +128,22 @@ proxyApp.get('/*', function(webRequest, response) {
 				var normalized = {'path':webRequest.path, 'method':'get'};
 				// var cookie = webRequest.headers['cookie'];
 				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				// console.log('FILE_NAME: '+foldername);
+				
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
+					
 					// 5. Write to the file
-					// write the request to file 
 					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
-					// write to local file
-		        	fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
+			        fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
@@ -151,50 +153,51 @@ proxyApp.get('/*', function(webRequest, response) {
 					// 6. Send back the response from the server
 		        	response.write(resp.body);
 					response.end();
-
 				});
-
-
-    		}
+			}
     		else {
-    			console.log("ERROR!");
+    			console.log("ERROR in sending/receving the request " + webRequest.path);
     		}
 		});
 	}
-	// To handle images or font, which requires to be encoded in binary
+	// Handle with images or font, which requires to be encoded in binary
 	else{	
 		options = {
 			host: hostName
 			, port: portNumber
 			, path: webRequest.url
 			, jar:true
-			// uri: proxiedHost + webRequest.url
 		}
 
 		var request = http.get(options, function(res){
 			
-			var imagedata = ''
-			res.setEncoding('binary')
+			var imagedata = '';
+			res.setEncoding('binary');
 
 			res.on('data', function(chunk){
-			    imagedata += chunk
+			    imagedata += chunk;
 			})
 
 			res.on('end', function(){
+				
 				requestCount++;
 				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
+				
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'get'};
 				// var cookie = webRequest.headers['cookie'];
 				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+				
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
-				console.log(foldername);
+				
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
-					// write the request to file 
+					
+					// 5. Write the request to file 
 					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
@@ -207,9 +210,10 @@ proxyApp.get('/*', function(webRequest, response) {
 					// fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', res, 'binary', function(err){
 					// 	if (err) throw err
 					// })
+
+					// 6. Send back the data
 					response.end(imagedata, 'binary');
 				});
-
 
 			})
 
@@ -230,13 +234,10 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
-	console.log('--------------------[ webRequest ]---------------');
-	console.log(webRequest);
-	console.log('--------------------[ queryBody ]---------------');
-	console.log(queryBody);
-	data = JSON.stringify(queryBody);
 
+	data = JSON.stringify(queryBody);
 	console.log('POST body:'+data);
+
 	var currentCount = requestCount;
 
 	function callback(error, cbresponse, body) {
@@ -247,14 +248,12 @@ proxyApp.post('/*', function(webRequest, response) {
 		var rtnHeaders = {};
 		for(var key in cbheaders) {
     		var value = cbheaders[key];
-			//console.log('HEADER:'+key+':'+value);
-			// if(key!='content-length'&&key!='host' ){
 			if(key!='content-length'&&key!='host' && key != 'location'){
 				rtnHeaders[key]=value;
 			}
 		}
-		////////////////////////////////
-		// the 'location' should be the host name running the player
+
+		// IMPORTANT: the 'location' should be the host name running the proxy
 		console.log('http://'+hostName+':'+listenPort+'/');
 		rtnHeaders['location']='http://localhost:'+listenPort+'/';
 
@@ -286,7 +285,8 @@ proxyApp.post('/*', function(webRequest, response) {
 			});
 
 			console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-			// response.writeHead(cbresponse.statusCode,cbheaders);
+
+			// 6. Send back the response
 			response.writeHead(cbresponse.statusCode,rtnHeaders);
 			response.write(body);
 			response.end();
@@ -295,6 +295,7 @@ proxyApp.post('/*', function(webRequest, response) {
         console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
 	};
 
+	// Prepare new headers based on webRequest.headers
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
     	var value = webRequest.headers[key];
@@ -315,6 +316,7 @@ proxyApp.post('/*', function(webRequest, response) {
 		, body:data
 	};
 
+	// Redirect the POST request
 	request.post(options, callback);
     console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 

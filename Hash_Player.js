@@ -2,7 +2,7 @@
 var serviceName = 'NA';
 var requestCount=1;
 var listenPort=9999;
-// var firstRequest=null;
+var firstRequest=null;
 
 process.argv.forEach(function (val, index, array) {
 	if(index==2){
@@ -41,24 +41,18 @@ playerApp.use(express.methodOverride());
 playerApp.use(playerApp.router);
 playerApp.use(express.static(path.join(__dirname, 'public')));
 playerApp.use(express.bodyParser());
-// playerApp.use(express.bodyParser());
 playerApp.use(bodyParser.urlencoded({ extended: false }));
-
-// Read the first request file (which will always be Request1.txt) and get the path, method, headers and body to use for comparison on every
-// other request coming in. If a match is made on all 4 parts of the incoming request to the request in the Request1.txt file, reset the
-// reqestCount to 1 and start again, so the proper responses are returned in the same order the requests are coming in.
 
 var requestList = null;
 var map = new HashMap();
 var sortMap = new HashMap();
+
+//---------------[ Read from file function ]---------------//
 function readFromFile(filename) {
-	// fs.readFile(serviceName+'/Request/!', 'utf-8', function(err,data) {
 	fs.readFile(filename, 'utf-8', function(err,data) {
   		if (err) {
     		return console.log(err);
   		}
-
-  		// firstRequest = JSON.parse(data);
   		console.log(JSON.parse(data));
   		return JSON.parse(data);
 	});
@@ -69,77 +63,46 @@ if ('development' == playerApp.get('env')) {
   playerApp.use(express.errorHandler());
 }
 
-	fs.readdir(serviceName, function(err, list) {
-		if (err) return console.log(err);
-		requestList = list;
-		console.log('in ' + requestList);
-		// First to sort the requestList, put them in sortMap
-		for (var i = 0; i < requestList.length; i++) {
-			var key = requestList[i].substring(0, requestList[i].indexOf('_'));
-			var value = requestList[i];
-			sortMap.set(key, value);
-			console.log(key + ' ' + value);
-		}
+//---------------[ Prepare the filepath to be read in the target folder ]---------------//
+fs.readdir(serviceName, function(err, list) {
+	if (err) return console.log(err);
+	requestList = list;
+	
+	// First sort the requestList, put them in sortMap
+	for (var i = 0; i < requestList.length; i++) {
+		var key = requestList[i].substring(0, requestList[i].indexOf('_'));
+		var value = requestList[i];
+		sortMap.set(key, value);
+		console.log(key + ' ' + value);
+	}
 
-		console.log('======================================');
-		// Second Put the filenames to the hashmap in sequence
-		for (var i = 0; i < requestList.length; i++) {
-			// console.log(sortMap.count());
-			var index = (i+1) + '';
-			// console.log(index);
-			var key = sortMap.get(index).substring(sortMap.get(index).indexOf('_')+1);
-			var value = sortMap.get(index);
-			map.set(key, value);
-			console.log(key + ' ' + value);
-		}
-	});
-	console.log('out '+ requestList);
-
-
-
+	console.log('======================================');
+	
+	// Second Put the filenames to the hashmap in sequence
+	for (var i = 0; i < requestList.length; i++) {
+		// console.log(sortMap.count());
+		var index = (i+1) + '';
+		// console.log(index);
+		var key = sortMap.get(index).substring(sortMap.get(index).indexOf('_')+1);
+		var value = sortMap.get(index);
+		map.set(key, value);
+		console.log(key + ' ' + value);
+	}
+});
 
 //---------------[ Setup the Routes ]---------------//
 playerApp.get('/*', function(webRequest, response) {
-	console.log('again '+ requestList);
+
+	var headers = webRequest.headers;
+
+	// First parse the request and create its corresponding filepath
 	var url = webRequest.url;
 	var filename = url.replace(new RegExp('/', 'g'), '!');
-	// parse the request first
 	var normalized = {'path':webRequest.path, 'method':'get'};
 	// var cookie = webRequest.headers['cookie'];
 	// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 	var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 	var hash_path = hash + '_' + filename;
-	console.log('!!!!'+JSON.stringify(normalized));
-	console.log('!!!!'+hash_path);
-
-	// read all the names in the folder
-	// var requestList = null;
-	// fs.readdir(serviceName, function(err, list) {
-	// 	if (err) return console.log(err);
-	// 	requestList = list;
-	
-	function endsWith(str, suffix) {
-		return str.indexOf(suffix, str.length - suffix.length) !== -1;
-	}
-	// for each of filename, check if it contains hash_path
-	// for (var i = 0; i < requestList.length; i++) {
-	// 	console.log(requestList[i]);
-	// 	if(endsWith(requestList[i], hash_path)){
-	// 		filePath = serviceName + '/'+requestList[i]+'/Request';
-	// 		console.log('true');
-	// 		break;
-	// 	}
-	// }
-
-	// filePath = serviceName + '/'+map.get(hash_path)+'/Request';
-	console.log(filePath);
-
-	// var request = require('request').debug=true;
-	// console.log('GET Request:'+webRequest.url);
-	var headers = webRequest.headers;
-	var url = webRequest.url;
-	var filename = url.replace(new RegExp('/', 'g'), '!');
-	// var filePath = serviceName + '/Request/' + filename;
 	var filePath = serviceName + '/'+map.get(hash_path)+'/Request';
 
 	// Basiclly, it handles three possible exceptions in handling GET request:
@@ -155,16 +118,11 @@ playerApp.get('/*', function(webRequest, response) {
   		else {
   			console.log('Read: ' + filePath);
 	  		firstRequest = JSON.parse(data);
-	  		// console.log(JSON.parse(data));
-	        // console.log(filePath+'###'+firstRequest);
 	        
 	        // The count does not take effect in this version
 	        requestCount++;		
 
 			//-------------[ See if the Request Headers match first request ]------------//
-			// console.log(JSON.stringify(firstRequest.headers));
-			// console.log('========');
-			// console.log(JSON.stringify(webRequest.headers));
 			var headerMatch = true;
 			var keys = Object.keys(headers);
 			for(var i = 0; i < keys.length; i++){
@@ -194,11 +152,11 @@ playerApp.get('/*', function(webRequest, response) {
 	            requestCount = 1;
 	        
 				var responseFilePath = filePath.replace('Request', 'Response');
-				console.log('$$$$$'+responseFilePath);
+				console.log('Reading the response from: '+responseFilePath);
 		        function endsWith(str, suffix) {
 	    			return str.indexOf(suffix, str.length - suffix.length) !== -1;
 				}
-				// If it's text
+				// Handle with the text-based content
 		        if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
 		        	&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
 
@@ -208,16 +166,14 @@ playerApp.get('/*', function(webRequest, response) {
 			    			response.write('No Response file found: '+err.path);
 			    			response.end();
 			  			}
-						// requestCount++;
 						else{
-							console.log("TEXT");
 							console.log(data);
 							response.write(data);
 							response.end();
 						}
 					});
 				}
-				// Or if it's image or woff, it should be encoded in binary
+				// Handle with image or font content, it should be encoded in binary
 				else{
 					// May need to handle exceptions here for reading images
 					var img = fs.readFileSync(responseFilePath);
@@ -237,23 +193,15 @@ playerApp.get('/*', function(webRequest, response) {
 
 	    	}
         });
-
-	// });
 });
 
 playerApp.post('/*', function(webRequest, response) {
 	var headers = webRequest.headers;
-	var url = webRequest.url;
 
-	// var filename = url.replace(new RegExp('/', 'g'), '!');
-	// var filePath = serviceName + '/Request/' + filename;
-	// console.log("@@@"+filename + "@@@" + filePath);
-
+	// First parse the request and create its corresponding filepath
 	var url = webRequest.url;
 	var filename = url.replace(new RegExp('/', 'g'), '!');
-	// parse the request first
 	var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
-	// var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
 	var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 	var hash_path = hash + '_' + filename;
 	console.log('HASH_PATH:'+hash_path);
@@ -280,11 +228,9 @@ playerApp.post('/*', function(webRequest, response) {
 			//console.log('Keys:'+JSON.stringify(keys));
 			for(var i=0;i<keys.length;i++){
 				var key = keys[i];
-				//console.log('Parsing key:'+key+'='+webRequest.headers[key]);
 				if(key!="host" && key!="user-agent" && key != 'accept-language' 
 					&& key != 'cookie' && key != 'accept' && key != 'content-length' 
 					&& key != 'accept-encoding'){
-					//console.log('comparing '+key+':'+webRequest.headers[key]+' Against:'+firstRequest.headers[key]);
 					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
 					if(!headerMatch){
 						console.log('Different Key: ' + key);
@@ -316,7 +262,7 @@ playerApp.post('/*', function(webRequest, response) {
 		    // Check the request path, method type, headers and body to the firstRequest attributes.
 		    // If a match is made, return the response for the request.
 		    // if (url == firstRequest.path && headerMatch && dataMatch) {
-		    	//////////////////////////////////////////////////////////
+		    //////////////////////////////////////////////////////////
 		    if (headerMatch && dataMatch) {
 		    	// The counter is no use for this version
 		        console.log("RESETING COUNTER\n\n"); 
