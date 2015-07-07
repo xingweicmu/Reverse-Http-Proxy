@@ -1,5 +1,4 @@
 var proxiedHost = 'http://127.0.0.1'
-
 var serviceName = 'Inventory';
 var requestCount=0;
 var responseCount=0;
@@ -29,8 +28,8 @@ else if(parts.length == 3){
 	portNumber = parts[2];
 }
 
-console.log('Proxying for host: '+hostName + ' on '+ portNumber);
-console.log('Proxying for service: '+serviceName);
+console.log('Reading requests from service: '+serviceName);
+console.log('Sending requests to destination: '+hostName + ' on '+ portNumber);
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
@@ -70,6 +69,7 @@ var requestList = null;
 var map = new HashMap();
 var sortMap = new HashMap();
 
+//---------------[ Read from targeted service directory ]---------------//
 fs.readdir(serviceName, function(err, list) {
 	if (err) return console.log(err);
 	requestList = list;
@@ -79,9 +79,11 @@ fs.readdir(serviceName, function(err, list) {
 		var key = requestList[i].substring(0, requestList[i].indexOf('_'));
 		var value = requestList[i];
 		sortMap.set(key, value);
-		console.log(key + ' ' + value);
+		// console.log(key + ' ' + value);
 	}
 
+	// Print out the requests to be sent
+	console.log('\n---------------[ Requests to be sent in sequence ]---------------')
 	for(var i = 1; i < requestList.length; i++){
 		var filePath = serviceName + '/' + sortMap.get(i+'') + '/Request';
 		console.log(filePath);
@@ -99,7 +101,7 @@ function waitAndDo(times) {
 	}
 
 	setTimeout(function() {
-		console.log('******* Doing a request on '+times+' *******');
+		console.log('\n******* Doing request '+times+' *******');
 		readAndSend(times);
 		waitAndDo(times+1);
 
@@ -132,15 +134,14 @@ function readAndSend(num){
 		    var value = readHeaders[key];
 			//console.log('HEADER:'+key+':'+value);
 			if(key != 'content-length' && key!='host'){
-			// if(key != 'cookie'){
 				newHeaders[key]=value;
 			}
 		}
 		// console.log(newHeaders);
 		sendRequest();
 	
-		// If it's GET
 		function sendRequest(){
+			// Handle GET request
 			if(readMethod == 'GET' || readMethod == 'get'){
 				var options = {
 					uri:proxiedHost + readPath
@@ -158,7 +159,7 @@ function readAndSend(num){
 					}
 			    });
 			}	
-			// If it's POST
+			// Handle POST request
 			else if(readMethod == 'POST' || readMethod == 'post') {
 				var options = {
 					uri:proxiedHost + readPath
