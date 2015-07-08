@@ -109,7 +109,7 @@ proxyApp.get('/*', function(webRequest, response) {
 		// Prepare redirecting request options
 		var options = {
 			uri:proxiedHost + webRequest.url, 
-			// headers: webRequest.headers, 
+			// headers: newHeaders, 
 			jar:true, 
 		};
 
@@ -207,9 +207,9 @@ proxyApp.get('/*', function(webRequest, response) {
 	            		console.log('File saved.')
 	        		})
 
-					// fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', res, 'binary', function(err){
-					// 	if (err) throw err
-					// })
+					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+						if (err) throw err
+					})
 
 					// 6. Send back the data
 					response.end(imagedata, 'binary');

@@ -73,10 +73,10 @@ fs.readdir(serviceName, function(err, list) {
 		var key = requestList[i].substring(0, requestList[i].indexOf('_'));
 		var value = requestList[i];
 		sortMap.set(key, value);
-		console.log(key + ' ' + value);
+		// console.log(key + ' ' + value);
 	}
 
-	console.log('======================================');
+	console.log('\n---------------[ Requests/Responses Saved locally ]---------------');
 	
 	// Second Put the filenames to the hashmap in sequence
 	for (var i = 0; i < requestList.length; i++) {
@@ -86,7 +86,7 @@ fs.readdir(serviceName, function(err, list) {
 		var key = sortMap.get(index).substring(sortMap.get(index).indexOf('_')+1);
 		var value = sortMap.get(index);
 		map.set(key, value);
-		console.log(key + ' ' + value);
+		console.log(value);
 	}
 });
 
@@ -146,7 +146,7 @@ playerApp.get('/*', function(webRequest, response) {
 			// If a match is made, return the response for the request.
 			console.log(url +' VS '+firstRequest.path);
 			console.log('Does headers match: '+headerMatch);
-	        if (url === firstRequest.path && headerMatch) {
+	        if (url == firstRequest.path && headerMatch) {
 	        	// No use for this version
 	        	console.log("RESETING COUNTER\n\n"); 
 	            requestCount = 1;
@@ -261,9 +261,9 @@ playerApp.post('/*', function(webRequest, response) {
 
 		    // Check the request path, method type, headers and body to the firstRequest attributes.
 		    // If a match is made, return the response for the request.
-		    // if (url == firstRequest.path && headerMatch && dataMatch) {
+		    if (url == firstRequest.path && headerMatch && dataMatch) {
 		    //////////////////////////////////////////////////////////
-		    if (headerMatch && dataMatch) {
+		    // if (headerMatch && dataMatch) {
 		    	// The counter is no use for this version
 		        console.log("RESETING COUNTER\n\n"); 
 		        requestCount = 1;
@@ -301,7 +301,7 @@ playerApp.post('/*', function(webRequest, response) {
 
 //---------------[ Start the Server ]---------------//
 var server = http.createServer(playerApp).listen(playerApp.get('port'), function(){
-  console.log('Proxy server listening on port ' + playerApp.get('port'));
+  console.log('Player server listening on port ' + playerApp.get('port'));
 });
 
 
