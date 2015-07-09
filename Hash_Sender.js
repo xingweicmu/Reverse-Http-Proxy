@@ -4,6 +4,7 @@ var requestCount=0;
 var responseCount=0;
 var listenPort=9999;
 var firstRequest = null;
+var interval = 500;
 
 process.argv.forEach(function (val, index, array) {
   	//console.log(index + ': ' + val);
@@ -12,6 +13,9 @@ process.argv.forEach(function (val, index, array) {
 	}
 	if(index==3){
 		serviceName = val;
+	}
+	if(index == 4){
+		interval = val;
 	}
 });
 
@@ -105,7 +109,7 @@ function waitAndDo(times) {
 		readAndSend(times);
 		waitAndDo(times+1);
 
-	}, 100);
+	}, interval);
 }
 		
 // waitAndDo(1);
