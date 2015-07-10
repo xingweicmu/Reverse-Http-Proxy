@@ -7,7 +7,7 @@ var firstRequest = null;
 var interval = 500;
 
 process.argv.forEach(function (val, index, array) {
-  	//console.log(index + ': ' + val);
+	//console.log(index + ': ' + val);
 	if(index==2){
 		proxiedHost=val;
 	}
@@ -66,7 +66,7 @@ proxyApp.use(bodyParser.urlencoded({ extended: false }));
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == proxyApp.get('env')) {
-  proxyApp.use(express.errorHandler());
+	proxyApp.use(express.errorHandler());
 }
 	
 var requestList = null;
@@ -119,23 +119,23 @@ function readAndSend(num){
 	var filePath = serviceName + '/' + sortMap.get(num+'') + '/Request';
 	fs.readFile(filePath, 'utf-8', function(err,data) {
 		if (err) {
-	    	return console.log(err);
-	  	}
+			return console.log(err);
+		}
 
-	  	firstRequest = JSON.parse(data);
-	  	var readPath = firstRequest.path;
-	  	var readHeaders = firstRequest.headers;
-	  	var readMethod = firstRequest.method;
-	  	var readBody = firstRequest.body;
-	  	console.log('path: ' + readPath);
-	  	console.log('method: ' + readMethod);
+		firstRequest = JSON.parse(data);
+		var readPath = firstRequest.path;
+		var readHeaders = firstRequest.headers;
+		var readMethod = firstRequest.method;
+		var readBody = firstRequest.body;
+		console.log('path: ' + readPath);
+		console.log('method: ' + readMethod);
 		console.log('headers: ' + JSON.stringify(readHeaders));
 		console.log('body: '+ readBody);
 
 		// Create a new header by removing host
 		var newHeaders = {};
 		for(var key in readHeaders) {
-		    var value = readHeaders[key];
+			var value = readHeaders[key];
 			//console.log('HEADER:'+key+':'+value);
 			if(key != 'content-length' && key!='host'){
 				newHeaders[key]=value;
@@ -152,16 +152,16 @@ function readAndSend(num){
 					, headers: newHeaders
 					, jar: true
 				};
-		  		request(options, function (error, resp, body) {
-			    	if (!error) {
-			    		console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
-			   			console.log('---------------[ Response from Server ]---------------');
-		    			console.log(resp.body);
-		       		}
+				request(options, function (error, resp, body) {
+					if (!error) {
+						console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
+						console.log('---------------[ Response from Server ]---------------');
+						console.log(resp.body);
+					}
 					else{
 						console.log('ERROR: '+error);
 					}
-			    });
+				});
 			}	
 			// Handle POST request
 			else if(readMethod == 'POST' || readMethod == 'post') {
@@ -171,21 +171,21 @@ function readAndSend(num){
 					, body:readBody
 					, jar: true
 				};
-			    request.post(options, function (error, resp, body) {
-			   		if (!error) {
-			   			// console.log(options);
-			   			console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+']----------------');
-			   			console.log('---------------[ Response from Server ]---------------');
-		       			console.log(body);
-		       		}
-			       	else{
-			       		console.log('ERROR: '+error);
-			       	}
-		    	});	
-		    }
-		    else {
-		    	console.log('Unrecognized Request: '+readMethod);
-		    }
+				request.post(options, function (error, resp, body) {
+					if (!error) {
+						// console.log(options);
+						console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+']----------------');
+						console.log('---------------[ Response from Server ]---------------');
+						console.log(body);
+					}
+					else{
+						console.log('ERROR: '+error);
+					}
+				});	
+			}
+			else {
+				console.log('Unrecognized Request: '+readMethod);
+			}
 		}
 	});
 }

@@ -1,5 +1,4 @@
 var proxiedHost = 'http://127.0.0.1'
-
 var serviceName = 'Inventory';
 var requestCount=0;
 var responseCount=0;
@@ -63,7 +62,7 @@ proxyApp.use(bodyParser.urlencoded({ extended: false }));
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == proxyApp.get('env')) {
-  proxyApp.use(express.errorHandler());
+	proxyApp.use(express.errorHandler());
 }
 
 //---------------[ Setup the Routes ]---------------//
@@ -87,7 +86,7 @@ proxyApp.get('/*', function(webRequest, response) {
 	// Create new headers based on webReqeust.headers by removing browser-based info
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
-    	var value = webRequest.headers[key];
+		var value = webRequest.headers[key];
 		if(key != 'content-length' && key!='host'){
 			newHeaders[key]=value;
 		}
@@ -95,7 +94,7 @@ proxyApp.get('/*', function(webRequest, response) {
 	console.log('Send Headers:'+JSON.stringify(newHeaders));
 
 	function endsWith(str, suffix) {
-    	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+		return str.indexOf(suffix, str.length - suffix.length) !== -1;
 	}
 
 	// Prepare file path by replacing the '/' with '!'
@@ -113,15 +112,15 @@ proxyApp.get('/*', function(webRequest, response) {
 			jar:true, 
 		};
 
-  		request(options, function (error, resp, body) {
-    		if (!error) {
-        		console.log(webRequest.url);
-        		console.log(resp.body);
+		request(options, function (error, resp, body) {
+			if (!error) {
+				console.log(webRequest.url);
+				console.log(resp.body);
 
-        		// Add the count by one after receiving the response
-	        	requestCount++;
+				// Add the count by one after receiving the response
+				requestCount++;
 
-	        	// rqst - the request sent to the proxy
+				// rqst - the request sent to the proxy
 				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
 
 				// 1. Normalize the request
@@ -143,7 +142,7 @@ proxyApp.get('/*', function(webRequest, response) {
 					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
-			        fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
+					fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
@@ -151,13 +150,13 @@ proxyApp.get('/*', function(webRequest, response) {
 					});
 
 					// 6. Send back the response from the server
-		        	response.write(resp.body);
+					response.write(resp.body);
 					response.end();
 				});
 			}
-    		else {
-    			console.log("ERROR in sending/receving the request " + webRequest.path);
-    		}
+			else {
+				console.log("ERROR in sending/receving the request " + webRequest.path);
+			}
 		});
 	}
 	// Handle with images or font, which requires to be encoded in binary
@@ -203,9 +202,9 @@ proxyApp.get('/*', function(webRequest, response) {
 					});
 
 					fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-	            		if (err) return console.log('ERR!!!'+err);
-	            		console.log('File saved.')
-	        		})
+						if (err) return console.log('ERR!!!'+err);
+						console.log('File saved.')
+					})
 
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
 						if (err) throw err
@@ -217,7 +216,7 @@ proxyApp.get('/*', function(webRequest, response) {
 
 			})
 
-  		})
+		})
 	}
 	console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
@@ -241,13 +240,13 @@ proxyApp.post('/*', function(webRequest, response) {
 	var currentCount = requestCount;
 
 	function callback(error, cbresponse, body) {
-    	console.log('--------------------[ endpoint Response '+currentCount+ ' ]---------------');
+		console.log('--------------------[ endpoint Response '+currentCount+ ' ]---------------');
 		var cbheaders = cbresponse.headers;
 		console.log('Headers from endpoint:'+JSON.stringify(cbheaders));
 		
 		var rtnHeaders = {};
 		for(var key in cbheaders) {
-    		var value = cbheaders[key];
+			var value = cbheaders[key];
 			if(key!='content-length'&&key!='host' && key != 'location'){
 				rtnHeaders[key]=value;
 			}
@@ -277,11 +276,11 @@ proxyApp.post('/*', function(webRequest, response) {
 			});
 
 			fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(rtnHeaders), function (err) {
-	  			if (err) throw err;
+				if (err) throw err;
 			});
 
 			fs.writeFile(serviceName+'/'+foldername+'/Response', body, function (err) {
-	  			if (err) throw err;
+				if (err) throw err;
 			});
 
 			console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
@@ -292,13 +291,13 @@ proxyApp.post('/*', function(webRequest, response) {
 			response.end();
 		});
 
-        console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
+		console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
 	};
 
 	// Prepare new headers based on webRequest.headers
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
-    	var value = webRequest.headers[key];
+		var value = webRequest.headers[key];
 		//console.log('HEADER:'+key+':'+value);
 		if(key!='content-length'&&key!='host'){
 			newHeaders[key]=value;
@@ -318,7 +317,7 @@ proxyApp.post('/*', function(webRequest, response) {
 
 	// Redirect the POST request
 	request.post(options, callback);
-    console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
+	console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
 });
 

@@ -50,17 +50,17 @@ var sortMap = new HashMap();
 //---------------[ Read from file function ]---------------//
 function readFromFile(filename) {
 	fs.readFile(filename, 'utf-8', function(err,data) {
-  		if (err) {
-    		return console.log(err);
-  		}
-  		console.log(JSON.parse(data));
-  		return JSON.parse(data);
+		if (err) {
+			return console.log(err);
+		}
+		console.log(JSON.parse(data));
+		return JSON.parse(data);
 	});
 }
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == playerApp.get('env')) {
-  playerApp.use(express.errorHandler());
+	playerApp.use(express.errorHandler());
 }
 
 //---------------[ Prepare the filepath to be read in the target folder ]---------------//
@@ -110,17 +110,17 @@ playerApp.get('/*', function(webRequest, response) {
 	// 2. No Match File Found with the same headers. (request url is the same, but headers are different)
 	// 3. No Response file found. (response file with the url is missing)
 	fs.readFile(filePath, 'utf-8', function(err,data) {
-  		if (err) {
-    		console.log(err);
+		if (err) {
+			console.log(err);
 			response.write('No Request file found: '+err.path);
 			response.end();
-  		}
-  		else {
-  			console.log('Read: ' + filePath);
-	  		firstRequest = JSON.parse(data);
-	        
-	        // The count does not take effect in this version
-	        requestCount++;		
+		}
+		else {
+			console.log('Read: ' + filePath);
+			firstRequest = JSON.parse(data);
+			
+			// The count does not take effect in this version
+			requestCount++;		
 
 			//-------------[ See if the Request Headers match first request ]------------//
 			var headerMatch = true;
@@ -146,26 +146,26 @@ playerApp.get('/*', function(webRequest, response) {
 			// If a match is made, return the response for the request.
 			console.log(url +' VS '+firstRequest.path);
 			console.log('Does headers match: '+headerMatch);
-	        if (url == firstRequest.path && headerMatch) {
-	        	// No use for this version
-	        	console.log("RESETING COUNTER\n\n"); 
-	            requestCount = 1;
-	        
+			if (url == firstRequest.path && headerMatch) {
+				// No use for this version
+				console.log("RESETING COUNTER\n\n"); 
+				requestCount = 1;
+			
 				var responseFilePath = filePath.replace('Request', 'Response');
 				console.log('Reading the response from: '+responseFilePath);
-		        function endsWith(str, suffix) {
-	    			return str.indexOf(suffix, str.length - suffix.length) !== -1;
+				function endsWith(str, suffix) {
+					return str.indexOf(suffix, str.length - suffix.length) !== -1;
 				}
 				// Handle with the text-based content
-		        if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
-		        	&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+				if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') 
+					&& !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
 
 					fs.readFile(responseFilePath, 'utf8', function (err,data) {
-			  			if (err) {
-			    			console.log(err);
-			    			response.write('No Response file found: '+err.path);
-			    			response.end();
-			  			}
+						if (err) {
+							console.log(err);
+							response.write('No Response file found: '+err.path);
+							response.end();
+						}
 						else{
 							console.log(data);
 							response.write(data);
@@ -189,10 +189,10 @@ playerApp.get('/*', function(webRequest, response) {
 				response.end();
 			}
 
-	        console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
+			console.log('--------------------[ /simulation GET Request '+requestCount+' ]---------------');
 
-	    	}
-        });
+			}
+		});
 });
 
 playerApp.post('/*', function(webRequest, response) {
@@ -209,14 +209,14 @@ playerApp.post('/*', function(webRequest, response) {
 	console.log('FILE_PATH:'+filePath);
 
 	fs.readFile(filePath, 'utf-8', function(err,data) {
-  		if (err) {
-    		console.log(err);
-    		response.write('No Request file found: '+err.path);
-    		response.end();
-  		}
-  		else {
+		if (err) {
+			console.log(err);
+			response.write('No Request file found: '+err.path);
+			response.end();
+		}
+		else {
 
-	  		firstRequest = JSON.parse(data);
+			firstRequest = JSON.parse(data);
 
 			// Add the request count
 			// No use in this version
@@ -242,14 +242,14 @@ playerApp.post('/*', function(webRequest, response) {
 			}
 			console.log('Do Headers Match:'+headerMatch);
 
-		    var hdrs = {'headers':headers};
-		    var data = '';
-		    console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
+			var hdrs = {'headers':headers};
+			var data = '';
+			console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
 			console.log('POST Request:'+url);
 			console.log('POST Headers:'+JSON.stringify(webRequest.headers));
 			console.log('POST Body:'+JSON.stringify(webRequest.body));
 
-		    data = JSON.stringify(webRequest.body);
+			data = JSON.stringify(webRequest.body);
 			console.log('POST Body:\n'+data+'\nAGAINST:\n'+firstRequest.body);
 			var dataMatch = false;
 
@@ -259,29 +259,28 @@ playerApp.post('/*', function(webRequest, response) {
 				console.log('Does Body Match:'+dataMatch);
 			}
 
-		    // Check the request path, method type, headers and body to the firstRequest attributes.
-		    // If a match is made, return the response for the request.
-		    if (url == firstRequest.path && headerMatch && dataMatch) {
-		    //////////////////////////////////////////////////////////
-		    // if (headerMatch && dataMatch) {
-		    	// The counter is no use for this version
-		        console.log("RESETING COUNTER\n\n"); 
-		        requestCount = 1;
-		    
-		        // If there is a match, read the file and send the response back
+			// Check the request path, method type, headers and body to the firstRequest attributes.
+			// If a match is made, return the response for the request.
+			if (url == firstRequest.path && headerMatch && dataMatch) {
+			//////////////////////////////////////////////////////////
+			// if (headerMatch && dataMatch) {
+				// The counter is no use for this version
+				console.log("RESETING COUNTER\n\n"); 
+				requestCount = 1;
+			
+				// If there is a match, read the file and send the response back
 				fs.readFile(filePath.replace('Request', 'Response'), 'utf8', function (err,data) {
-			  		if (err) {
-			    		console.log(err);
-			    		response.write('No Response file found: '+err.path);
-			    		response.end();
-			  		}
+					if (err) {
+						console.log(err);
+						response.write('No Response file found: '+err.path);
+						response.end();
+					}
 					// Send response back to the client
 					else{
 						response.write(data);
 						response.end();
 					}
-			    });	
-
+				});	
 			}else{
 				console.log('No Match File Found');
 				console.log('URLMatch: '+ (url == firstRequest.path));
@@ -293,7 +292,7 @@ playerApp.post('/*', function(webRequest, response) {
 				response.end();
 			}
 
-		    console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
+			console.log('--------------------[ /simulation POST Request '+requestCount+' ]---------------');
 		}
 	});
 
@@ -301,7 +300,7 @@ playerApp.post('/*', function(webRequest, response) {
 
 //---------------[ Start the Server ]---------------//
 var server = http.createServer(playerApp).listen(playerApp.get('port'), function(){
-  console.log('Player server listening on port ' + playerApp.get('port'));
+	console.log('Player server listening on port ' + playerApp.get('port'));
 });
 
 
