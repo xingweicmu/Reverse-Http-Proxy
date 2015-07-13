@@ -98,7 +98,7 @@ fs.readdir(serviceName, function(err, list) {
 
 });
 
-
+//---------------[ Issue the request with intervals ]---------------//
 function waitAndDo(times) {
 	if(times > requestList.length) {
 		return;
@@ -112,8 +112,7 @@ function waitAndDo(times) {
 	}, interval);
 }
 		
-// waitAndDo(1);
-
+//---------------[ Read the request from local file and send it ]---------------//
 function readAndSend(num){
 	// console.log(num);
 	var filePath = serviceName + '/' + sortMap.get(num+'') + '/Request';
