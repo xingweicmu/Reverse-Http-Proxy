@@ -42,6 +42,7 @@ var http = require('http');
 var path = require('path');
 var os=require('os');
 var fs = require('fs');
+var https = require('https');
 
 //---------------[ Create the Folder ]---------------//
 fs.mkdir(serviceName,function(){});
@@ -89,11 +90,13 @@ proxyApp.get('/*', function(webRequest, response) {
 	var newHeaders = {};
 	for(var key in webRequest.headers) {
 		var value = webRequest.headers[key];
-		if(key != 'content-length' && key!='host'){
+		if(key != 'content-length' && key!='host' && key!='referer'){
 			newHeaders[key]=value;
 		}
 	}
-	console.log('Send Headers:'+JSON.stringify(newHeaders));
+	newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
+	// newHeaders['host']='10.33.121.243:9443';
+	console.log('-> Send Headers:'+JSON.stringify(newHeaders));
 
 	function endsWith(str, suffix) {
 		return str.indexOf(suffix, str.length - suffix.length) !== -1;
@@ -109,59 +112,115 @@ proxyApp.get('/*', function(webRequest, response) {
 		
 
 		// Prepare redirecting request options
+		// var options = {
+		// 	uri:proxiedHost + webRequest.url, 
+		// 	headers: newHeaders, 
+		// 	jar:true, 
+		// };
 		var options = {
-			uri:proxiedHost + webRequest.url, 
-			// headers: newHeaders, 
-			jar:true, 
-		};
+			host: hostName
+			, port: '9443'
+			, path: '/vsphere-client'+webRequest.url
+			// , headers: newHeaders
+			, headers: webRequest.headers
+			, jar:true
+		}
 
-		request(options, function (error, resp, body) {
-			if (!error) {
-				console.log(webRequest.url);
-				console.log(resp.body);
+		var request = https.get(options, function(res){
+			var imagedata = '';
+			res.setEncoding('binary');
 
-				// Add the count by one after receiving the response
+			res.on('data', function(chunk){
+			    imagedata += chunk;
+			})
+
+			res.on('end', function(){
+				
 				requestCount++;
-
-				// rqst - the request sent to the proxy
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
-
+				var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
+				
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'get'};
 				// var cookie = webRequest.headers['cookie'];
 				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
-
+				
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
-				// console.log('FILE_NAME: '+foldername);
 				
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
 					
-					// 5. Write to the file
+					// 5. Write the request to file 
 					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
 						if (err) return console.log('ERR!!!'+err);
 					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
 
-					// 6. Send back the response from the server
-					response.writeHead(resp.statusCode,resp.headers);
-					response.write(resp.body);
-					response.end();
+					fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
+						if (err) return console.log('ERR!!!'+err);
+						console.log('File saved.')
+					})
+
+					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+						if (err) throw err
+					})
+
+					// 6. Send back the data
+					response.writeHead(res.statusCode,res.headers);
+					response.end(imagedata, 'binary');
 				});
-			}
-			else {
-				console.log("ERROR in sending/receving the request " + webRequest.path);
-			}
-		});
+
+			})
+		})
+		// request(options, function (error, resp, body) {
+		// 	if (!error) {
+		// 		console.log(webRequest.url);
+		// 		console.log(resp.body);
+
+		// 		// Add the count by one after receiving the response
+		// 		requestCount++;
+
+		// 		// rqst - the request sent to the proxy
+		// 		var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
+
+		// 		// 1. Normalize the request
+		// 		var normalized = {'path':webRequest.path, 'method':'get'};
+		// 		// var cookie = webRequest.headers['cookie'];
+		// 		// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+
+		// 		// 2. Do Hash
+		// 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				
+		// 		// 3. Create foldername in the format of num-hash-path
+		// 		var foldername = requestCount + '_' + hash + '_' + filePath;
+		// 		// console.log('FILE_NAME: '+foldername);
+				
+		// 		// 4. Create folder
+		// 		fs.mkdir(serviceName+'/'+foldername,function(){
+					
+		// 			// 5. Write to the file
+		// 			fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+		// 				if (err) return console.log('ERR!!!'+err);
+		// 			});
+		// 			fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
+		// 				if (err) return console.log('ERR!!!'+err);
+		// 			});
+		// 			fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
+		// 				if (err) return console.log('ERR!!!'+err);
+		// 			});
+
+		// 			// 6. Send back the response from the server
+		// 			response.writeHead(resp.statusCode,resp.headers);
+		// 			response.write(resp.body);
+		// 			response.end();
+		// 		});
+		// 	}
+		// 	else {
+		// 		console.log("ERROR in sending/receving the request " + webRequest.path +' '+ error);
+		// 	}
+		// });
 	}
 	// Handle with images or font, which requires to be encoded in binary
 	else{	
@@ -177,10 +236,10 @@ proxyApp.get('/*', function(webRequest, response) {
 			host: hostName
 			, port: '9443'
 			, path: '/vsphere-client'+webRequest.url
-			, accept: '*/*'
+			// , headers: newHeaders
+			, headers: webRequest.headers
 			, jar:true
 		}
-		var https = require('https');
 
 		console.log('TTTTTT'+JSON.stringify(options));
 
@@ -196,7 +255,7 @@ proxyApp.get('/*', function(webRequest, response) {
 			res.on('end', function(){
 				
 				requestCount++;
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
+				var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
 				
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'get'};
@@ -254,15 +313,15 @@ proxyApp.post('/*', function(webRequest, response) {
  /////////////////////////////////
  // One way to read the body from the request: aggregate the chunk
  /////////////////////////////////
- //	   var testData='';
- //    webRequest.setEncoding('binary');
- //    webRequest.on('data', function(chunk) { 
- //       testData += chunk;
- //    });
+ 	// var testData='';
+  //   webRequest.setEncoding('binary');
+  //   webRequest.on('data', function(chunk) { 
+  //      testData += chunk;
+  //   });
 
- //    webRequest.on('end', function() {
- //        console.log(testData);
- //        data = testData;
+  //   webRequest.on('end', function() {
+  //       console.log(testData);
+  //       data = testData;
 
  /////////////////////////////////
  // The other way to read the body from the request: save the chunk to a buffer
@@ -289,12 +348,14 @@ proxyApp.post('/*', function(webRequest, response) {
 		var newHeaders = {};
 		for(var key in webRequest.headers) {
 			var value = webRequest.headers[key];
-			if(key!='content-length'&&key!='host'){
+			if(key!='host' && key != 'referer'){
 				newHeaders[key]=value;
 			}
 		}
-		// newHeaders["cookie"]="JSESSIONID=48A4D4FFB663A17DE9D867921C9644D0; JSESSIONID=82DABB588E85A9E40C737BE3C368C00B; JSESSIONID=84FA0722A5647D0B7D4E56B0C7DDFC3C";
-		// console.log('Send Headers:'+JSON.stringify(newHeaders));
+		newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
+		// newHeaders['host']='10.33.121.243:9443';
+		// newHeaders['referer']='https://10.33.121.243:9443/vsphere-client/UI.swf/[[DYNAMIC]]/6';
+		console.log('-> New Headers:'+JSON.stringify(newHeaders));
 
 		////////////////////////////////////////////////////////////
 		// One way to redirect the request: using 'request' library
@@ -372,13 +433,13 @@ proxyApp.post('/*', function(webRequest, response) {
 			, path: webRequest.url
 			// , path: '/vsphere-client/endpoints/messagebroker/amfsecure'
 			, method: 'POST'
-			, headers: newHeaders
-			// , headers: webRequest.headers
+			// , headers: newHeaders
+			, headers: webRequest.headers
 			, jar:true
 			// , body:data
 		};
-		var https = require('https');
-		console.log('OPTIONS: '+JSON.stringify(options));
+	
+		console.log('-> OPTIONS: '+JSON.stringify(options));
 		var post_req = https.request(options, function(res){
 			
 			////////////////////////////////////////////////////
@@ -403,8 +464,19 @@ proxyApp.post('/*', function(webRequest, response) {
 			//////////////////////////////////////////////////
 			// The other way to read/send the response body: read the chunk and send it
 			/////////////////////////////////////////////////
-			console.log(res.headers);
+			console.log('-> Response Headers: '+JSON.stringify(res.headers));
+			// cbheaders = res.headers;
+			// var rtnHeaders = {};
+			// for(var key in cbheaders) {
+			// 	var value = cbheaders[key];
+			// 	if(key!='connection'){
+			// 		rtnHeaders[key]=value;
+			// 	}
+			// }
+			// rtnHeaders['connection'] = 'close';
+			// console.log('-> Headers to return: '+JSON.stringify(rtnHeaders));
 			response.writeHead(res.statusCode,res.headers);
+			
 			
 			var data = [];
 	    	res.on('data', function(chunk) {
@@ -419,8 +491,10 @@ proxyApp.post('/*', function(webRequest, response) {
 	        	postCount++;
 	        	fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
 					if (err) return console.log('ERROR!!!'+err);
-						console.log('File saved.')
+						console.log('-> File saved.')
 				})
+	        	
+				// response.write(buffer, 'binary');
 	        	response.end();
 	    	});
 		});
@@ -435,8 +509,19 @@ proxyApp.post('/*', function(webRequest, response) {
 });
 
 //---------------[ Start the Server ]---------------//
-var server = http.createServer(proxyApp).listen(proxyApp.get('port'), function(){
-	console.log('Proxy server listening on port ' + proxyApp.get('port'));
-});
+// var server = https.createServer(proxyApp).listen(proxyApp.get('port'), function(){
+// 	console.log('Proxy server listening on port ' + proxyApp.get('port'));
+// });
+
+var privateKey  = fs.readFileSync('key.pem', 'utf8');
+var certificate = fs.readFileSync('cert.pem', 'utf8');
+
+var credentials = {key: privateKey, cert: certificate};
+
+var httpServer = http.createServer(proxyApp);
+var httpsServer = https.createServer(credentials, proxyApp);
+
+httpServer.listen(9997);
+httpsServer.listen(9996);
 
 
