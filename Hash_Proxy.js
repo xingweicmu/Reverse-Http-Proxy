@@ -88,14 +88,23 @@ proxyApp.get('/*', function(webRequest, response) {
 
 	// Create new headers based on webReqeust.headers by removing browser-based info
 	var newHeaders = {};
+	var referer = null;
 	for(var key in webRequest.headers) {
 		var value = webRequest.headers[key];
-		if(key != 'content-length' && key!='host' && key!='referer'){
+
+// XXX
+if (key=='referer') {
+	console.log('>>>> REFERER: ', value);
+	referer = value;
+}
+
+		if(key != 'content-length' && key!='host' /*&& key!='referer'*/){
 			newHeaders[key]=value;
 		}
 	}
-	newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
+	// newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
 	// newHeaders['host']='10.33.121.243:9443';
+	// newHeaders['referer']=(referer||'').replace('localhost:9996', '10.33.121.243:9443/vsphere-client');
 	console.log('-> Send Headers:'+JSON.stringify(newHeaders));
 
 	function endsWith(str, suffix) {
@@ -105,6 +114,7 @@ proxyApp.get('/*', function(webRequest, response) {
 	// Prepare file path by replacing the '/' with '!'
 	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 	console.log('@@@'+filePath);
+
 
 	// Handle text-based content
 	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') && !endsWith(webRequest.url, 'gif') && !endsWith(webRequest.url, 'ico')
@@ -120,11 +130,33 @@ proxyApp.get('/*', function(webRequest, response) {
 		var options = {
 			host: hostName
 			, port: '9443'
-			, path: '/vsphere-client'+webRequest.url
-			// , headers: newHeaders
-			, headers: webRequest.headers
+			// , path: '/vsphere-client'+webRequest.url
+			, path: webRequest.url
+			, headers: newHeaders
+			// , headers: webRequest.headers
 			, jar:true
 		}
+		if(webRequest.url == '/localhost:9996/config/log.xml'){
+			options = {
+				host: hostName
+				, port: '9443'
+				, path: '/vsphere-client/config/log.xml'
+				, headers: newHeaders
+				// , headers: webRequest.headers
+				, jar:true
+			}
+		}
+		if(webRequest.url == '/localhost:9996/config/resources.xml'){
+			options = {
+				host: hostName
+				, port: '9443'
+				, path: '/vsphere-client/config/resources.xml'
+				, headers: newHeaders
+				// , headers: webRequest.headers
+				, jar:true
+			}
+		}
+
 
 		var request = https.get(options, function(res){
 			var imagedata = '';
@@ -235,9 +267,10 @@ proxyApp.get('/*', function(webRequest, response) {
 		options = {
 			host: hostName
 			, port: '9443'
-			, path: '/vsphere-client'+webRequest.url
-			// , headers: newHeaders
-			, headers: webRequest.headers
+			// , path: '/vsphere-client'+webRequest.url
+			, path: webRequest.url
+			, headers: newHeaders
+			// , headers: webRequest.headers
 			, jar:true
 		}
 
@@ -313,30 +346,30 @@ proxyApp.post('/*', function(webRequest, response) {
  /////////////////////////////////
  // One way to read the body from the request: aggregate the chunk
  /////////////////////////////////
- 	// var testData='';
-  //   webRequest.setEncoding('binary');
-  //   webRequest.on('data', function(chunk) { 
-  //      testData += chunk;
-  //   });
+ 	var testData='';
+    webRequest.setEncoding('binary');
+    webRequest.on('data', function(chunk) { 
+       testData += chunk;
+    });
 
-  //   webRequest.on('end', function() {
-  //       console.log(testData);
-  //       data = testData;
+    webRequest.on('end', function() {
+        console.log(testData);
+        data = testData;
 
  /////////////////////////////////
  // The other way to read the body from the request: save the chunk to a buffer
  ////////////////////////////////
-    var reqeustBody = [];
-	webRequest.on('data', function(chunk) {
- 		reqeustBody.push(chunk);
- 	}).on('end', function() {
-	    //at this point data is an array of Buffers
-		//so Buffer.concat() can make us a new Buffer
-		//of all of them together
-        var buffer = Buffer.concat(reqeustBody);
-        console.log(buffer.toString('base64'));
-        testData = buffer;
-        // data = buffer;
+	// var reqeustBody = [];
+	// webRequest.on('data', function(chunk) {
+	// 	reqeustBody.push(chunk);
+	// }).on('end', function() {
+	// 	//at this point data is an array of Buffers
+	// 	//so Buffer.concat() can make us a new Buffer
+	// 	//of all of them together
+	// 	var buffer = Buffer.concat(reqeustBody);
+	// 	console.log(buffer.toString('base64'));
+	// 	testData = buffer;
+	// 	data = buffer;
     
 		// data = JSON.stringify(queryBody);
 		// data = queryBody;
@@ -346,15 +379,22 @@ proxyApp.post('/*', function(webRequest, response) {
 
 		// Prepare new headers based on webRequest.headers
 		var newHeaders = {};
+		var referer = null;
 		for(var key in webRequest.headers) {
 			var value = webRequest.headers[key];
+// XXX
+if (key=='referer') {
+	console.log('>>>> REFERER: ', value);
+	referer = value;
+}
 			if(key!='host' && key != 'referer'){
 				newHeaders[key]=value;
 			}
 		}
-		newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
+		// newHeaders["cookie"]="JSESSIONID=8B6A665F9FCEB81A5ECE2B6A4AA01A81; JSESSIONID=F82C0E958C498BEE68492CA2B97051BA";
 		// newHeaders['host']='10.33.121.243:9443';
 		// newHeaders['referer']='https://10.33.121.243:9443/vsphere-client/UI.swf/[[DYNAMIC]]/6';
+		// newHeaders['referer']=(referer||'').replace('localhost:9996', '10.33.121.243:9443/vsphere-client');
 		console.log('-> New Headers:'+JSON.stringify(newHeaders));
 
 		////////////////////////////////////////////////////////////
@@ -433,11 +473,23 @@ proxyApp.post('/*', function(webRequest, response) {
 			, path: webRequest.url
 			// , path: '/vsphere-client/endpoints/messagebroker/amfsecure'
 			, method: 'POST'
-			// , headers: newHeaders
-			, headers: webRequest.headers
+			, headers: newHeaders
+			// , headers: webRequest.headers
 			, jar:true
 			// , body:data
 		};
+
+		if(webRequest.url == '/localhost:9996/messagebroker/amfsecure'){
+			options = {
+				host: hostName
+				, port: '9443'
+				, path: '/vsphere-client/messagebroker/amfsecure'
+				, method: 'POST'
+				, headers: newHeaders
+				// , headers: webRequest.headers
+				, jar:true
+			}
+		}
 	
 		console.log('-> OPTIONS: '+JSON.stringify(options));
 		var post_req = https.request(options, function(res){
@@ -481,7 +533,7 @@ proxyApp.post('/*', function(webRequest, response) {
 			var data = [];
 	    	res.on('data', function(chunk) {
 	        	data.push(chunk);
-	        	response.write(chunk, 'binary');
+	        	// response.write(chunk, 'binary');
 	    	}).on('end', function() {
 		        //at this point data is an array of Buffers
 		        //so Buffer.concat() can make us a new Buffer
@@ -494,7 +546,7 @@ proxyApp.post('/*', function(webRequest, response) {
 						console.log('-> File saved.')
 				})
 	        	
-				// response.write(buffer, 'binary');
+				response.write(buffer, 'binary');
 	        	response.end();
 	    	});
 		});
