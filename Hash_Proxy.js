@@ -60,8 +60,11 @@ proxyApp.use(express.methodOverride());
 proxyApp.use(proxyApp.router);
 proxyApp.use(express.static(path.join(__dirname, 'public')));
 // proxyApp.use(express.bodyParser());
-proxyApp.use(bodyParser.raw({ type: 'application/x-amf' }));
-proxyApp.use(bodyParser.urlencoded({ extended: false }));
+// proxyApp.use(bodyParser.raw({ type: 'application/x-amf' }));
+// proxyApp.use(bodyParser.urlencoded({ extended: false }));
+proxyApp.use(express.bodyParser());
+proxyApp.use(bodyParser.urlencoded({ extended: true }));
+// proxyApp.use(bodyParser.json());
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == proxyApp.get('env')) {
@@ -342,7 +345,62 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
+console.log('<<<<< '+ JSON.stringify(webRequest.body));
+console.log('<<<<< '+ encodeURIComponent(JSON.stringify(webRequest.body)));
+if(JSON.stringify(webRequest.body).length > 2){
+	var buf = '';
+	webRequest.setEncoding('utf8');
+	webRequest.on('data', function(chunk){ buf += chunk });
+	webRequest.on('end', function() {
+		console.log(buf);
+	});
+	console.log('POST Body:'+buf);
+	console.log('POST Body:'+JSON.stringify(webRequest.body));
+	testData = JSON.stringify(webRequest.body);
+	var options = {
+		// uri:proxiedHost+webRequest.url
+		// uri:'https://10.33.121.243:9443'+webRequest.url
+		host: '10.33.121.243'	// Hard-coded for now
+		, port: '9443'
+		, path: webRequest.url
+		// , path: '/vsphere-client/endpoints/messagebroker/amfsecure'
+		, method: 'POST'
+		// , headers: newHeaders
+		, headers: webRequest.headers
+		// , form: testData
+		, jar:true
+		// , body:testData
+	};
+	console.log('-> OPTIONS: '+JSON.stringify(options));
+	var post_req = https.request(options, function(res){
+		response.writeHead(res.statusCode,res.headers);
+			
+		var data = [];
+	    res.on('data', function(chunk) {
+	    	data.push(chunk);
+	        // response.write(chunk, 'binary');
+	    }).on('end', function() {
+			//at this point data is an array of Buffers
+		    //so Buffer.concat() can make us a new Buffer
+		    //of all of them together
+	        var buffer = Buffer.concat(data);
+	        console.log(buffer.toString('base64'));
+	        postCount++;
+	        fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
+				if (err) return console.log('ERROR!!!'+err);
+					console.log('-> File saved.')
+			})
+	        	
+			response.write(buffer, 'binary');
+	        response.end();
+	    });
+	});
+		
+	// Send the post request with body
+	post_req.write(testData);
+	post_req.end();
 
+}
  /////////////////////////////////
  // One way to read the body from the request: aggregate the chunk
  /////////////////////////////////
@@ -350,6 +408,7 @@ proxyApp.post('/*', function(webRequest, response) {
     webRequest.setEncoding('binary');
     webRequest.on('data', function(chunk) { 
        testData += chunk;
+       console.log('chunk: '+chunk);
     });
 
     webRequest.on('end', function() {
