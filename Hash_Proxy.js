@@ -120,8 +120,8 @@ if (key=='referer') {
 
 
 	// Handle text-based content
-	if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') && !endsWith(webRequest.url, 'gif') && !endsWith(webRequest.url, 'ico')
-		&& !endsWith(webRequest.url, 'swf') && !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
+	// if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') && !endsWith(webRequest.url, 'gif') && !endsWith(webRequest.url, 'ico')
+	// 	&& !endsWith(webRequest.url, 'swf') && !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
 		
 
 		// Prepare redirecting request options
@@ -139,26 +139,26 @@ if (key=='referer') {
 			// , headers: webRequest.headers
 			, jar:true
 		}
-		if(webRequest.url == '/localhost:9996/config/log.xml'){
-			options = {
-				host: hostName
-				, port: '9443'
-				, path: '/vsphere-client/config/log.xml'
-				, headers: newHeaders
-				// , headers: webRequest.headers
-				, jar:true
-			}
-		}
-		if(webRequest.url == '/localhost:9996/config/resources.xml'){
-			options = {
-				host: hostName
-				, port: '9443'
-				, path: '/vsphere-client/config/resources.xml'
-				, headers: newHeaders
-				// , headers: webRequest.headers
-				, jar:true
-			}
-		}
+		// if(webRequest.url == '/localhost:9996/config/log.xml'){
+		// 	options = {
+		// 		host: hostName
+		// 		, port: '9443'
+		// 		, path: '/vsphere-client/config/log.xml'
+		// 		, headers: newHeaders
+		// 		// , headers: webRequest.headers
+		// 		, jar:true
+		// 	}
+		// }
+		// if(webRequest.url == '/localhost:9996/config/resources.xml'){
+		// 	options = {
+		// 		host: hostName
+		// 		, port: '9443'
+		// 		, path: '/vsphere-client/config/resources.xml'
+		// 		, headers: newHeaders
+		// 		// , headers: webRequest.headers
+		// 		, jar:true
+		// 	}
+		// }
 
 
 		var request = https.get(options, function(res){
@@ -256,81 +256,81 @@ if (key=='referer') {
 		// 		console.log("ERROR in sending/receving the request " + webRequest.path +' '+ error);
 		// 	}
 		// });
-	}
+	// }
 	// Handle with images or font, which requires to be encoded in binary
-	else{	
-		////////////////////////////////////////
-		// options = {
-		// 	host: hostName
-		// 	, port: portNumber
-		// 	, path: webRequest.url
-		// 	, jar:true
-		// }
-		// Hard-coded for now
-		options = {
-			host: hostName
-			, port: '9443'
-			// , path: '/vsphere-client'+webRequest.url
-			, path: webRequest.url
-			, headers: newHeaders
-			// , headers: webRequest.headers
-			, jar:true
-		}
+	// else{	
+	// 	////////////////////////////////////////
+	// 	// options = {
+	// 	// 	host: hostName
+	// 	// 	, port: portNumber
+	// 	// 	, path: webRequest.url
+	// 	// 	, jar:true
+	// 	// }
+	// 	// Hard-coded for now
+	// 	options = {
+	// 		host: hostName
+	// 		, port: '9443'
+	// 		// , path: '/vsphere-client'+webRequest.url
+	// 		, path: webRequest.url
+	// 		, headers: newHeaders
+	// 		// , headers: webRequest.headers
+	// 		, jar:true
+	// 	}
 
-		console.log('TTTTTT'+JSON.stringify(options));
+	// 	console.log('TTTTTT'+JSON.stringify(options));
 
-		var request = https.get(options, function(res){
+	// 	var request = https.get(options, function(res){
 			
-			var imagedata = '';
-			res.setEncoding('binary');
+	// 		var imagedata = '';
+	// 		res.setEncoding('binary');
 
-			res.on('data', function(chunk){
-			    imagedata += chunk;
-			})
+	// 		res.on('data', function(chunk){
+	// 		    imagedata += chunk;
+	// 		})
 
-			res.on('end', function(){
+	// 		res.on('end', function(){
 				
-				requestCount++;
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
+	// 			requestCount++;
+	// 			var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
 				
-				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'get'};
-				// var cookie = webRequest.headers['cookie'];
-				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+	// 			// 1. Normalize the request
+	// 			var normalized = {'path':webRequest.path, 'method':'get'};
+	// 			// var cookie = webRequest.headers['cookie'];
+	// 			// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 				
-				// 2. Do Hash
-				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+	// 			// 2. Do Hash
+	// 			var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				
-				// 3. Create foldername in the format of num-hash-path
-				var foldername = requestCount + '_' + hash + '_' + filePath;
+	// 			// 3. Create foldername in the format of num-hash-path
+	// 			var foldername = requestCount + '_' + hash + '_' + filePath;
 				
-				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
+	// 			// 4. Create folder
+	// 			fs.mkdir(serviceName+'/'+foldername,function(){
 					
-					// 5. Write the request to file 
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
+	// 				// 5. Write the request to file 
+	// 				fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+	// 					if (err) return console.log('ERR!!!'+err);
+	// 				});
 
-					fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-						if (err) return console.log('ERR!!!'+err);
-						console.log('File saved.')
-					})
+	// 				fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
+	// 					if (err) return console.log('ERR!!!'+err);
+	// 					console.log('File saved.')
+	// 				})
 
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
-						if (err) throw err
-					})
+	// 				fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+	// 					if (err) throw err
+	// 				})
 
-					// 6. Send back the data
-					response.writeHead(res.statusCode,res.headers);
-					response.end(imagedata, 'binary');
-				});
+	// 				// 6. Send back the data
+	// 				response.writeHead(res.statusCode,res.headers);
+	// 				response.end(imagedata, 'binary');
+	// 			});
 
-			})
+	// 		})
 
-		})
-	}
-	console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
+	// 	})
+	// }
+	// console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
 });
 
@@ -544,17 +544,17 @@ if (key=='referer') {
 			// , body:data
 		};
 
-		if(webRequest.url == '/localhost:9996/messagebroker/amfsecure'){
-			options = {
-				host: hostName
-				, port: '9443'
-				, path: '/vsphere-client/messagebroker/amfsecure'
-				, method: 'POST'
-				, headers: newHeaders
-				// , headers: webRequest.headers
-				, jar:true
-			}
-		}
+		// if(webRequest.url == '/localhost:9996/messagebroker/amfsecure'){
+		// 	options = {
+		// 		host: hostName
+		// 		, port: '9443'
+		// 		, path: '/vsphere-client/messagebroker/amfsecure'
+		// 		, method: 'POST'
+		// 		, headers: newHeaders
+		// 		// , headers: webRequest.headers
+		// 		, jar:true
+		// 	}
+		// }
 	
 		console.log('-> OPTIONS: '+JSON.stringify(options));
 		var post_req = https.request(options, function(res){
@@ -582,17 +582,7 @@ if (key=='referer') {
 			// The other way to read/send the response body: read the chunk and send it
 			/////////////////////////////////////////////////
 			console.log('-> Response Headers: '+JSON.stringify(res.headers));
-			// cbheaders = res.headers;
-			// var rtnHeaders = {};
-			// for(var key in cbheaders) {
-			// 	var value = cbheaders[key];
-			// 	if(key!='connection'){
-			// 		rtnHeaders[key]=value;
-			// 	}
-			// }
-			// rtnHeaders['connection'] = 'close';
-			// console.log('-> Headers to return: '+JSON.stringify(rtnHeaders));
-			response.writeHead(res.statusCode,res.headers);
+			// response.writeHead(res.statusCode,res.headers);
 			
 			
 			var data = [];
@@ -605,14 +595,44 @@ if (key=='referer') {
 		        //of all of them together
 	        	var buffer = Buffer.concat(data);
 	        	console.log(buffer.toString('base64'));
-	        	postCount++;
-	        	fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
-					if (err) return console.log('ERROR!!!'+err);
-						console.log('-> File saved.')
-				})
+	   //      	postCount++;
+	   //      	fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
+				// 	if (err) return console.log('ERROR!!!'+err);
+				// 		console.log('-> File saved.')
+				// })
+				requestCount++;
+				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
+				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+				// 1. Normalize the request
+				var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
+				// 2. Do Hash
+				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				// 3. Create foldername in the format of num-hash-path
+				var foldername = requestCount + '_' + hash + '_' + filePath;
+				console.log(foldername);
+				// 4. Create folder
+				fs.mkdir(serviceName+'/'+foldername,function(){
+					// 5. Write file
+					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(newHeaders), function(err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
+						if (err) throw err;
+					});
+					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
+					// 6. Send back the response
+					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+					response.writeHead(res.statusCode,res.headers);
+					response.end(buffer, 'binary');
+					// response.write(body);
+					// response.end();
+				});
 	        	
-				response.write(buffer, 'binary');
-	        	response.end();
+				// response.write(buffer, 'binary');
+	   //      	response.end();
 	    	});
 		});
 		
