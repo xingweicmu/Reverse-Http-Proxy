@@ -347,16 +347,22 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('POST Headers:'+JSON.stringify(headers));
 console.log('<<<<< '+ JSON.stringify(webRequest.body));
 console.log('<<<<< '+ encodeURIComponent(JSON.stringify(webRequest.body)));
+var urlcodeJson = require('urlcode-json');
+// var json = {"j_username":"cm9vdA==","j_password":"dm13YXJl","locale":"en_US","_spring_security_remember_me":"false"};
+var json = webRequest.body;
+var test = urlcodeJson.encode(json, true);
+console.log('<<<<< '+ test.replace(/_/g,'%5F'));
 if(JSON.stringify(webRequest.body).length > 2){
 	var buf = '';
-	webRequest.setEncoding('utf8');
+	webRequest.setEncoding('utf8');	
 	webRequest.on('data', function(chunk){ buf += chunk });
 	webRequest.on('end', function() {
 		console.log(buf);
 	});
 	console.log('POST Body:'+buf);
 	console.log('POST Body:'+JSON.stringify(webRequest.body));
-	testData = JSON.stringify(webRequest.body);
+	// testData = JSON.stringify(webRequest.body);
+	testData = test.replace(/_/g,'%5F');
 	var options = {
 		// uri:proxiedHost+webRequest.url
 		// uri:'https://10.33.121.243:9443'+webRequest.url
