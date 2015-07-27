@@ -59,12 +59,8 @@ proxyApp.use(express.urlencoded());
 proxyApp.use(express.methodOverride());
 proxyApp.use(proxyApp.router);
 proxyApp.use(express.static(path.join(__dirname, 'public')));
-// proxyApp.use(express.bodyParser());
-// proxyApp.use(bodyParser.raw({ type: 'application/x-amf' }));
-// proxyApp.use(bodyParser.urlencoded({ extended: false }));
 proxyApp.use(express.bodyParser());
 proxyApp.use(bodyParser.urlencoded({ extended: true }));
-// proxyApp.use(bodyParser.json());
 
 //---------------[ Used for Development Only ]---------------//
 if ('development' == proxyApp.get('env')) {
@@ -110,19 +106,14 @@ proxyApp.get('/*', function(webRequest, response) {
 	// Prepare file path by replacing the '/' with '!'
 	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 	console.log('@@@'+filePath);
-		// Prepare redirecting request options
-		// var options = {
-		// 	uri:proxiedHost + webRequest.url, 
-		// 	headers: newHeaders, 
-		// 	jar:true, 
-		// };
+
 		var options = {
 			host: hostName
-			, port: '9443'
+			, port: portNumber
 			// , path: '/vsphere-client'+webRequest.url
 			, path: webRequest.url
-			, headers: newHeaders
-			// , headers: webRequest.headers
+			// , headers: newHeaders
+			, headers: webRequest.headers
 			, jar:true
 		}
 
@@ -188,65 +179,41 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
-///////////////////
-// Special handling for urlencoded
-//////////////////
-console.log('<<<<< '+ JSON.stringify(webRequest.body));
-console.log('<<<<< '+ encodeURIComponent(JSON.stringify(webRequest.body)));
-var urlcodeJson = require('urlcode-json');
-// var json = {"j_username":"cm9vdA==","j_password":"dm13YXJl","locale":"en_US","_spring_security_remember_me":"false"};
-var json = webRequest.body;
-var test = urlcodeJson.encode(json, true);
-console.log('<<<<< '+ test.replace(/_/g,'%5F'));
-if(JSON.stringify(webRequest.body).length > 2){
-	var buf = '';
-	webRequest.setEncoding('utf8');	
-	webRequest.on('data', function(chunk){ buf += chunk });
-	webRequest.on('end', function() {
-		console.log(buf);
-	});
-	console.log('POST Body:'+buf);
-	console.log('POST Body:'+JSON.stringify(webRequest.body));
-	// testData = JSON.stringify(webRequest.body);
-	// testData = test.replace(/_/g,'%5F');
-	var body = test.replace(/_/g,'%5F');
-	var options = {
-		// uri:proxiedHost+webRequest.url
-		// uri:'https://10.33.121.243:9443'+webRequest.url
-		host: '10.33.121.243'	// Hard-coded for now
-		, port: '9443'
-		, path: webRequest.url
-		// , path: '/vsphere-client/endpoints/messagebroker/amfsecure'
-		, method: 'POST'
-		// , headers: newHeaders
-		, headers: webRequest.headers
-		// , form: testData
-		, jar:true
-		// , body:testData
-	};
-	console.log('-> OPTIONS: '+JSON.stringify(options));
-	var post_req = https.request(options, function(res){
-		response.writeHead(res.statusCode,res.headers);
-			
-		var data = [];
-	    res.on('data', function(chunk) {
-	    	data.push(chunk);
-	        // response.write(chunk, 'binary');
-	    }).on('end', function() {
-			//at this point data is an array of Buffers
-		    //so Buffer.concat() can make us a new Buffer
-		    //of all of them together
-	        var buffer = Buffer.concat(data);
-	        console.log(buffer.toString('base64'));
-	  //       postCount++;
-	  //       fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
-			// 	if (err) return console.log('ERROR!!!'+err);
-			// 		console.log('-> File saved.')
-			// })
-	        	
-			// response.write(buffer, 'binary');
-	  //       response.end();
-	  			requestCount++;
+	
+	///////////////////
+	// Special handling for urlencoded
+	//////////////////
+	if(JSON.stringify(webRequest.body).length > 2){
+
+		var urlcodeJson = require('urlcode-json');
+		var json = webRequest.body;
+		var test = urlcodeJson.encode(json, true);
+		var body = test.replace(/_/g,'%5F');
+		console.log('POST Body:' + body);
+		var options = {
+			host: hostName
+			, port: portNumber
+			, path: webRequest.url
+			, method: 'POST'
+			, headers: webRequest.headers
+			// , headers: newHeaders
+			, jar:true
+		};
+		console.log('-> OPTIONS: '+JSON.stringify(options));
+		var post_req = https.request(options, function(res){
+			response.writeHead(res.statusCode,res.headers);
+				
+			var data = [];
+			res.on('data', function(chunk) {
+				data.push(chunk);
+				// response.write(chunk, 'binary');
+			}).on('end', function() {
+				//at this point data is an array of Buffers
+				//so Buffer.concat() can make us a new Buffer
+				//of all of them together
+				var buffer = Buffer.concat(data);
+				console.log(buffer.toString('base64'));
+				requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
 				// 1. Normalize the request
@@ -268,35 +235,33 @@ if(JSON.stringify(webRequest.body).length > 2){
 					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
 						if (err) throw err;
 					});
-					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
 					// 6. Send back the response
 					// response.writeHead(cbresponse.statusCode,rtnHeaders);
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					// response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
-	    		});
+				});
+			});
 		});
+			
+		// Send the post request with body
+		post_req.write(body);
+		post_req.end();
+
+	}
+	/////////////////////////////////
+	// One way to read the body from the request: aggregate the chunk
+	/////////////////////////////////
+	var testData='';
+	webRequest.setEncoding('binary');
+	webRequest.on('data', function(chunk) { 
+		testData += chunk;
+		console.log('chunk: '+chunk);
 	});
-		
-	// Send the post request with body
-	console.log('.....'+body);
-	post_req.write(body);
-	post_req.end();
 
-}
- /////////////////////////////////
- // One way to read the body from the request: aggregate the chunk
- /////////////////////////////////
- 	var testData='';
-    webRequest.setEncoding('binary');
-    webRequest.on('data', function(chunk) { 
-       testData += chunk;
-       console.log('chunk: '+chunk);
-    });
-
-    webRequest.on('end', function() {
-        console.log(testData);
-        data = testData;
+	webRequest.on('end', function() {
+		console.log(testData);
+		data = testData;
 		console.log('POST body:'+testData);
 
 		var currentCount = requestCount;
@@ -320,15 +285,13 @@ if(JSON.stringify(webRequest.body).length > 2){
 		// The other way to redirect the request: using 'https' library
 		//////////////////////////////////////////////////////////////
 		var options = {
-			// uri:proxiedHost+webRequest.url
-			// uri:'https://10.33.121.243:9443'+webRequest.url
-			host: '10.33.121.243'	// Hard-coded for now
-			, port: '9443'
+	
+			host: hostName
+			, port: portNumber
 			, path: webRequest.url
-			// , path: '/vsphere-client/endpoints/messagebroker/amfsecure'
 			, method: 'POST'
-			, headers: newHeaders
-			// , headers: webRequest.headers
+			// , headers: newHeaders
+			, headers: webRequest.headers
 			, jar:true
 			// , body:data
 		};
@@ -337,15 +300,15 @@ if(JSON.stringify(webRequest.body).length > 2){
 		var post_req = https.request(options, function(res){
 					
 			var data = [];
-	    	res.on('data', function(chunk) {
-	        	data.push(chunk);
-	        	// response.write(chunk, 'binary');
-	    	}).on('end', function() {
-		        //at this point data is an array of Buffers
-		        //so Buffer.concat() can make us a new Buffer
-		        //of all of them together
-	        	var buffer = Buffer.concat(data);
-	        	console.log(buffer.toString('base64'));
+			res.on('data', function(chunk) {
+			data.push(chunk);
+			// response.write(chunk, 'binary');
+			}).on('end', function() {
+				//at this point data is an array of Buffers
+				//so Buffer.concat() can make us a new Buffer
+				//of all of them together
+				var buffer = Buffer.concat(data);
+				console.log(buffer.toString('base64'));
 
 				requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
@@ -375,18 +338,13 @@ if(JSON.stringify(webRequest.body).length > 2){
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
-					// response.write(body);
-					// response.end();
 				});
-	        	
-				// response.write(buffer, 'binary');
-	   //      	response.end();
-	    	});
+			});
 		});
 		
 		// Send the post request with body
 		post_req.write(testData,'binary');
-	  	post_req.end();
+		post_req.end();
 
 		console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 	});
@@ -394,9 +352,6 @@ if(JSON.stringify(webRequest.body).length > 2){
 });
 
 //---------------[ Start the Server ]---------------//
-// var server = https.createServer(proxyApp).listen(proxyApp.get('port'), function(){
-// 	console.log('Proxy server listening on port ' + proxyApp.get('port'));
-// });
 
 var privateKey  = fs.readFileSync('key.pem', 'utf8');
 var certificate = fs.readFileSync('cert.pem', 'utf8');
