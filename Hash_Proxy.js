@@ -94,13 +94,6 @@ proxyApp.get('/*', function(webRequest, response) {
 	var referer = null;
 	for(var key in webRequest.headers) {
 		var value = webRequest.headers[key];
-
-// XXX
-if (key=='referer') {
-	console.log('>>>> REFERER: ', value);
-	referer = value;
-}
-
 		if(key != 'content-length' && key!='host' /*&& key!='referer'*/){
 			newHeaders[key]=value;
 		}
@@ -117,13 +110,6 @@ if (key=='referer') {
 	// Prepare file path by replacing the '/' with '!'
 	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 	console.log('@@@'+filePath);
-
-
-	// Handle text-based content
-	// if(!endsWith(webRequest.url, 'png') && !endsWith(webRequest.url, 'jpg') && !endsWith(webRequest.url, 'gif') && !endsWith(webRequest.url, 'ico')
-	// 	&& !endsWith(webRequest.url, 'swf') && !endsWith(webRequest.url, 'ttf') && !endsWith(webRequest.url, 'woff')){
-		
-
 		// Prepare redirecting request options
 		// var options = {
 		// 	uri:proxiedHost + webRequest.url, 
@@ -139,27 +125,6 @@ if (key=='referer') {
 			// , headers: webRequest.headers
 			, jar:true
 		}
-		// if(webRequest.url == '/localhost:9996/config/log.xml'){
-		// 	options = {
-		// 		host: hostName
-		// 		, port: '9443'
-		// 		, path: '/vsphere-client/config/log.xml'
-		// 		, headers: newHeaders
-		// 		// , headers: webRequest.headers
-		// 		, jar:true
-		// 	}
-		// }
-		// if(webRequest.url == '/localhost:9996/config/resources.xml'){
-		// 	options = {
-		// 		host: hostName
-		// 		, port: '9443'
-		// 		, path: '/vsphere-client/config/resources.xml'
-		// 		, headers: newHeaders
-		// 		// , headers: webRequest.headers
-		// 		, jar:true
-		// 	}
-		// }
-
 
 		var request = https.get(options, function(res){
 			var imagedata = '';
@@ -209,128 +174,6 @@ if (key=='referer') {
 
 			})
 		})
-		// request(options, function (error, resp, body) {
-		// 	if (!error) {
-		// 		console.log(webRequest.url);
-		// 		console.log(resp.body);
-
-		// 		// Add the count by one after receiving the response
-		// 		requestCount++;
-
-		// 		// rqst - the request sent to the proxy
-		// 		var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
-
-		// 		// 1. Normalize the request
-		// 		var normalized = {'path':webRequest.path, 'method':'get'};
-		// 		// var cookie = webRequest.headers['cookie'];
-		// 		// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
-
-		// 		// 2. Do Hash
-		// 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
-				
-		// 		// 3. Create foldername in the format of num-hash-path
-		// 		var foldername = requestCount + '_' + hash + '_' + filePath;
-		// 		// console.log('FILE_NAME: '+foldername);
-				
-		// 		// 4. Create folder
-		// 		fs.mkdir(serviceName+'/'+foldername,function(){
-					
-		// 			// 5. Write to the file
-		// 			fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-		// 				if (err) return console.log('ERR!!!'+err);
-		// 			});
-		// 			fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
-		// 				if (err) return console.log('ERR!!!'+err);
-		// 			});
-		// 			fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
-		// 				if (err) return console.log('ERR!!!'+err);
-		// 			});
-
-		// 			// 6. Send back the response from the server
-		// 			response.writeHead(resp.statusCode,resp.headers);
-		// 			response.write(resp.body);
-		// 			response.end();
-		// 		});
-		// 	}
-		// 	else {
-		// 		console.log("ERROR in sending/receving the request " + webRequest.path +' '+ error);
-		// 	}
-		// });
-	// }
-	// Handle with images or font, which requires to be encoded in binary
-	// else{	
-	// 	////////////////////////////////////////
-	// 	// options = {
-	// 	// 	host: hostName
-	// 	// 	, port: portNumber
-	// 	// 	, path: webRequest.url
-	// 	// 	, jar:true
-	// 	// }
-	// 	// Hard-coded for now
-	// 	options = {
-	// 		host: hostName
-	// 		, port: '9443'
-	// 		// , path: '/vsphere-client'+webRequest.url
-	// 		, path: webRequest.url
-	// 		, headers: newHeaders
-	// 		// , headers: webRequest.headers
-	// 		, jar:true
-	// 	}
-
-	// 	console.log('TTTTTT'+JSON.stringify(options));
-
-	// 	var request = https.get(options, function(res){
-			
-	// 		var imagedata = '';
-	// 		res.setEncoding('binary');
-
-	// 		res.on('data', function(chunk){
-	// 		    imagedata += chunk;
-	// 		})
-
-	// 		res.on('end', function(){
-				
-	// 			requestCount++;
-	// 			var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
-				
-	// 			// 1. Normalize the request
-	// 			var normalized = {'path':webRequest.path, 'method':'get'};
-	// 			// var cookie = webRequest.headers['cookie'];
-	// 			// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
-				
-	// 			// 2. Do Hash
-	// 			var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
-				
-	// 			// 3. Create foldername in the format of num-hash-path
-	// 			var foldername = requestCount + '_' + hash + '_' + filePath;
-				
-	// 			// 4. Create folder
-	// 			fs.mkdir(serviceName+'/'+foldername,function(){
-					
-	// 				// 5. Write the request to file 
-	// 				fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-	// 					if (err) return console.log('ERR!!!'+err);
-	// 				});
-
-	// 				fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-	// 					if (err) return console.log('ERR!!!'+err);
-	// 					console.log('File saved.')
-	// 				})
-
-	// 				fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
-	// 					if (err) throw err
-	// 				})
-
-	// 				// 6. Send back the data
-	// 				response.writeHead(res.statusCode,res.headers);
-	// 				response.end(imagedata, 'binary');
-	// 			});
-
-	// 		})
-
-	// 	})
-	// }
-	// console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 
 });
 
@@ -345,6 +188,9 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
+///////////////////
+// Special handling for urlencoded
+//////////////////
 console.log('<<<<< '+ JSON.stringify(webRequest.body));
 console.log('<<<<< '+ encodeURIComponent(JSON.stringify(webRequest.body)));
 var urlcodeJson = require('urlcode-json');
@@ -362,7 +208,8 @@ if(JSON.stringify(webRequest.body).length > 2){
 	console.log('POST Body:'+buf);
 	console.log('POST Body:'+JSON.stringify(webRequest.body));
 	// testData = JSON.stringify(webRequest.body);
-	testData = test.replace(/_/g,'%5F');
+	// testData = test.replace(/_/g,'%5F');
+	var body = test.replace(/_/g,'%5F');
 	var options = {
 		// uri:proxiedHost+webRequest.url
 		// uri:'https://10.33.121.243:9443'+webRequest.url
@@ -391,19 +238,49 @@ if(JSON.stringify(webRequest.body).length > 2){
 		    //of all of them together
 	        var buffer = Buffer.concat(data);
 	        console.log(buffer.toString('base64'));
-	        postCount++;
-	        fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
-				if (err) return console.log('ERROR!!!'+err);
-					console.log('-> File saved.')
-			})
+	  //       postCount++;
+	  //       fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
+			// 	if (err) return console.log('ERROR!!!'+err);
+			// 		console.log('-> File saved.')
+			// })
 	        	
-			response.write(buffer, 'binary');
-	        response.end();
-	    });
+			// response.write(buffer, 'binary');
+	  //       response.end();
+	  			requestCount++;
+				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
+				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
+				// 1. Normalize the request
+				var normalized = {'path':webRequest.path, 'method':'post', 'body':body};
+				// 2. Do Hash
+				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				// 3. Create foldername in the format of num-hash-path
+				var foldername = requestCount + '_' + hash + '_' + filePath;
+				console.log(foldername);
+				// 4. Create folder
+				fs.mkdir(serviceName+'/'+foldername,function(){
+					// 5. Write file
+					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
+						if (err) throw err;
+					});
+					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
+					// 6. Send back the response
+					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+					console.log('-> Response Headers: '+JSON.stringify(res.headers));
+					// response.writeHead(res.statusCode,res.headers);
+					response.end(buffer, 'binary');
+	    		});
+		});
 	});
 		
 	// Send the post request with body
-	post_req.write(testData);
+	console.log('.....'+body);
+	post_req.write(body);
 	post_req.end();
 
 }
@@ -420,24 +297,6 @@ if(JSON.stringify(webRequest.body).length > 2){
     webRequest.on('end', function() {
         console.log(testData);
         data = testData;
-
- /////////////////////////////////
- // The other way to read the body from the request: save the chunk to a buffer
- ////////////////////////////////
-	// var reqeustBody = [];
-	// webRequest.on('data', function(chunk) {
-	// 	reqeustBody.push(chunk);
-	// }).on('end', function() {
-	// 	//at this point data is an array of Buffers
-	// 	//so Buffer.concat() can make us a new Buffer
-	// 	//of all of them together
-	// 	var buffer = Buffer.concat(reqeustBody);
-	// 	console.log(buffer.toString('base64'));
-	// 	testData = buffer;
-	// 	data = buffer;
-    
-		// data = JSON.stringify(queryBody);
-		// data = queryBody;
 		console.log('POST body:'+testData);
 
 		var currentCount = requestCount;
@@ -447,11 +306,6 @@ if(JSON.stringify(webRequest.body).length > 2){
 		var referer = null;
 		for(var key in webRequest.headers) {
 			var value = webRequest.headers[key];
-// XXX
-if (key=='referer') {
-	console.log('>>>> REFERER: ', value);
-	referer = value;
-}
 			if(key!='host' && key != 'referer'){
 				newHeaders[key]=value;
 			}
@@ -461,71 +315,6 @@ if (key=='referer') {
 		// newHeaders['referer']='https://10.33.121.243:9443/vsphere-client/UI.swf/[[DYNAMIC]]/6';
 		// newHeaders['referer']=(referer||'').replace('localhost:9996', '10.33.121.243:9443/vsphere-client');
 		console.log('-> New Headers:'+JSON.stringify(newHeaders));
-
-		////////////////////////////////////////////////////////////
-		// One way to redirect the request: using 'request' library
-		////////////////////////////////////////////////////////////
-
-		// var options = {
-		// 	// uri:proxiedHost+webRequest.url
-		// 	uri:'https://10.33.121.243:9443'+webRequest.url	
-		// 	// uri:'https://10.33.121.243:9443/vsphere-client/endpoints/messagebroker/amfsecure'
-		// 	//, headers: {"content-type":"text/xml; charset=utf-8","soapaction":"urn:vim25/5.5","user-agent":"VMware vim-java 1.0"}
-		// 	, headers: newHeaders
-		// 	// , headers: webRequest.headers
-		// 	, jar:true
-		// 	, body:data
-		// };
-		
-		// // Redirect the POST request
-		// request.post(options, callback);
-
-		// function callback(error, cbresponse, body) {
-		// 	console.log('--------------------[ endpoint Response '+currentCount+ ' ]---------------');
-		// 	var cbheaders = cbresponse.headers;
-		// 	console.log('Headers from endpoint:'+JSON.stringify(cbheaders));
-		// 	var rtnHeaders = {};
-		// 	for(var key in cbheaders) {
-		// 		var value = cbheaders[key];
-		// 		if(key!='content-length' && key!='host' && key != 'location'){
-		// 			rtnHeaders[key]=value;
-		// 		}
-		// 	}
-		// 	// IMPORTANT: the 'location' should be the host name running the proxy
-		// 	console.log('http://'+hostName+':'+listenPort+'/');
-		// 	// rtnHeaders['location']='http://localhost:'+listenPort+'/';
-		// 	requestCount++;
-		// 	var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
-		// 	var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
-		// 	// 1. Normalize the request
-		// 	var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
-		// 	// 2. Do Hash
-		// 	var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
-		// 	// 3. Create foldername in the format of num-hash-path
-		// 	var foldername = requestCount + '_' + hash + '_' + filePath;
-		// 	console.log(foldername);
-		// 	// 4. Create folder
-		// 	fs.mkdir(serviceName+'/'+foldername,function(){
-		// 		// 5. Write file
-		// 		fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(newHeaders), function(err) {
-		// 			if (err) throw err;
-		// 		});
-		// 		fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(rtnHeaders), function (err) {
-		// 			if (err) throw err;
-		// 		});
-		// 		fs.writeFile(serviceName+'/'+foldername+'/Response', body, function (err) {
-		// 			if (err) throw err;
-		// 		});
-		// 		console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-		// 		// 6. Send back the response
-		// 		response.writeHead(cbresponse.statusCode,rtnHeaders);
-		// 		response.end(body, 'binary');
-		// 		// response.write(body);
-		// 		// response.end();
-		// 	});
-		// 	console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
-		// };
-
 
 		///////////////////////////////////////////////////////////////
 		// The other way to redirect the request: using 'https' library
@@ -543,48 +332,10 @@ if (key=='referer') {
 			, jar:true
 			// , body:data
 		};
-
-		// if(webRequest.url == '/localhost:9996/messagebroker/amfsecure'){
-		// 	options = {
-		// 		host: hostName
-		// 		, port: '9443'
-		// 		, path: '/vsphere-client/messagebroker/amfsecure'
-		// 		, method: 'POST'
-		// 		, headers: newHeaders
-		// 		// , headers: webRequest.headers
-		// 		, jar:true
-		// 	}
-		// }
 	
 		console.log('-> OPTIONS: '+JSON.stringify(options));
 		var post_req = https.request(options, function(res){
-			
-			////////////////////////////////////////////////////
-			// One way to read/send the response body: aggregate the chunk first, then send them back together
-			///////////////////////////////////////////////////
-
-			// var imagedata = '';
-			// res.setEncoding('binary');
-			// res.on('data', function(chunk){
-			//     imagedata += chunk;
-			// })
-			// res.on('end', function(){
-			// 	fs.writeFile(serviceName+'/Response', imagedata, 'binary', function(err){
-			// 		if (err) return console.log('ERR!!!'+err);
-			// 			console.log('File saved.')
-			// 	})
-			// 	response.writeHead(res.statusCode,res.headers);
-			// 	console.log(res.headers);
-			// 	response.end(imagedata,'binary');
-			// });
-
-			//////////////////////////////////////////////////
-			// The other way to read/send the response body: read the chunk and send it
-			/////////////////////////////////////////////////
-			console.log('-> Response Headers: '+JSON.stringify(res.headers));
-			// response.writeHead(res.statusCode,res.headers);
-			
-			
+					
 			var data = [];
 	    	res.on('data', function(chunk) {
 	        	data.push(chunk);
@@ -595,14 +346,10 @@ if (key=='referer') {
 		        //of all of them together
 	        	var buffer = Buffer.concat(data);
 	        	console.log(buffer.toString('base64'));
-	   //      	postCount++;
-	   //      	fs.writeFile(serviceName+'/Response'+postCount, buffer, 'binary', function(err){
-				// 	if (err) return console.log('ERROR!!!'+err);
-				// 		console.log('-> File saved.')
-				// })
+
 				requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
-				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':testData};
 				// 1. Normalize the request
 				var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
 				// 2. Do Hash
@@ -613,7 +360,7 @@ if (key=='referer') {
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
 					// 5. Write file
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(newHeaders), function(err) {
+					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
 						if (err) throw err;
 					});
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
@@ -625,6 +372,7 @@ if (key=='referer') {
 					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
 					// 6. Send back the response
 					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
 					// response.write(body);
