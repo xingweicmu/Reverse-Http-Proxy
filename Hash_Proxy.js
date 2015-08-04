@@ -43,11 +43,13 @@ var path = require('path');
 var os=require('os');
 var fs = require('fs');
 var https = require('https');
+var HashMap = require('hashmap');
 
 //---------------[ Create the Folder ]---------------//
 fs.mkdir(serviceName,function(){});
 
 //---------------[ Create the Application ]---------------//
+var hashMap = new HashMap();
 var proxyApp = express();
 proxyApp.set('port', process.env.PORT || listenPort);
 proxyApp.set('views', path.join(__dirname, 'views'));
@@ -169,6 +171,18 @@ proxyApp.get('/*', function(webRequest, response) {
 });
 
 proxyApp.post('/*', function(webRequest, response) {
+
+	///////////////////////
+	// Before doing everything, let's try to save the request in a HashMap
+	// var key = webRequest.url;
+	// if(hashMap.has(key)){
+	// 	var ocu = hashMap.get(key)+1;
+	// 	hashMap.set(key, ocu);
+	// }else{
+	// 	hashMap.set(key, 1);
+	// }
+	///////////////////////
+
 	var request = require('request');
 	var jar = request.jar();
 	var headers = webRequest.headers;
@@ -217,7 +231,7 @@ proxyApp.post('/*', function(webRequest, response) {
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
 				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'post', 'body':body};
+				var normalized = {'path':webRequest.path, 'method':'post'};
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				// 3. Create foldername in the format of num-hash-path
@@ -264,6 +278,33 @@ proxyApp.post('/*', function(webRequest, response) {
 		data = testData;
 		console.log('POST body:'+testData);
 
+		/////////////////////////////////
+		////////////////////////////////
+		// Right after we receive the body of the request, we put them into the hashmap
+		// var bodyString = testData.toString('utf8');
+		// console.log(bodyString);
+		// var index0 = testData.toString('utf8').indexOf('/');
+		// var index1 = index0+1;
+		// for(var i = index0+1; i<bodyString.length; i++){
+		// 	console.log('Char At: '+ bodyString.charAt(i));
+		// 	if(bodyString.charAt(i) <= '9' && bodyString.charAt(i) >= '0'){
+		// 		index1 = i;
+		// 	}else{
+		// 		break;
+		// 	}
+		// }
+		// var num = bodyString.substring(index0+1, index1+1);
+		// console.log('Sequence: '+ num);
+
+		// var key = webRequest.url+'_'+num;
+		// if(hashMap.has(key)){
+		// 	var ocu = hashMap.get(key)+1;
+		// 	hashMap.set(key, ocu);
+		// }else{
+		// 	hashMap.set(key, 1);
+		// }
+		///////////////////////////
+
 		var currentCount = requestCount;
 
 		// Prepare new headers based on webRequest.headers
@@ -308,18 +349,46 @@ proxyApp.post('/*', function(webRequest, response) {
 				//so Buffer.concat() can make us a new Buffer
 				//of all of them together
 				var buffer = Buffer.concat(data);
-				console.log(buffer.toString('base64'));
+				console.log('BUFFER: '+buffer.toString('utf8'));
+
+				/////////////////////////
+				var index0 = buffer.toString('utf8').indexOf('/');
+				var index = buffer.toString('utf8').indexOf('onResult');
+				console.log('Index: '+ index);
+				// var num = buffer.toString('utf8').charAt(index - 2);
+				var num = buffer.toString('utf8').substring(index0+1, index - 1);
+				console.log('Char At: '+ num);
+
+				var key = webRequest.url+'_'+num;
+				if(hashMap.has(key)){
+					var ocu = hashMap.get(key)+1;
+					hashMap.set(key, ocu);
+				}else{
+					hashMap.set(key, 1);
+				}
+				///////////////////////////
 
 				requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':testData};
 				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
+				// var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
+				var normalized = {'path':webRequest.path, 'method':'post'};
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				console.log(foldername);
+
+				//////////////////
+				function endsWith(str, suffix) {
+					return str.indexOf(suffix, str.length - suffix.length) !== -1;
+				}
+				if (endsWith(foldername, 'amfsecure')){
+					foldername = foldername + '_'+num+'_'+hashMap.get(webRequest.url+'_'+num);
+				}
+				/////////////////
+
 				// 4. Create folder
 				fs.mkdir(serviceName+'/'+foldername,function(){
 					// 5. Write file
