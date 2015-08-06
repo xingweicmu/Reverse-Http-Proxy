@@ -193,17 +193,12 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
-	
-	///////////////////
-	// Special handling for urlencoded
-	//////////////////
-	if(JSON.stringify(webRequest.body).length > 2){
+	console.log('POST Body:'+JSON.stringify(queryBody));
+	// console.log('Content-type: '+webRequest.headers['content-type']+'/'+webRequest.headers['Content-Type']);
 
-		var urlcodeJson = require('urlcode-json');
-		var json = webRequest.body;
-		var test = urlcodeJson.encode(json, true);
-		var body = test.replace(/_/g,'%5F');
-		console.log('POST Body:' + body);
+	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8'){
+		var body = JSON.stringify(webRequest.body);
+		console.log('POST Body(urlencoded):' + body);
 		var options = {
 			host: hostName
 			, port: portNumber
@@ -246,7 +241,7 @@ proxyApp.post('/*', function(webRequest, response) {
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
 						if (err) throw err;
 					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
+					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
 						if (err) throw err;
 					});
 					// 6. Send back the response
@@ -261,8 +256,82 @@ proxyApp.post('/*', function(webRequest, response) {
 		// Send the post request with body
 		post_req.write(body);
 		post_req.end();
-
 	}
+
+	///////////////////
+	// Special handling for urlencoded
+	//////////////////
+
+	// else if(JSON.stringify(webRequest.body).length > 2){
+	else if(webRequest.headers['content-type'] == 'application/x-www-form-urlencoded') {
+		var urlcodeJson = require('urlcode-json');
+		var json = webRequest.body;
+		var test = urlcodeJson.encode(json, true);
+		var body = test.replace(/_/g,'%5F');
+		// if(JSON.stringify(webRequest.body).length = 2) {
+		// 	body = JSON.stringify(webRequest.body);
+		// }
+		console.log('POST Body(urlencoded):' + body);
+		var options = {
+			host: hostName
+			, port: portNumber
+			, path: webRequest.url
+			, method: 'POST'
+			, headers: webRequest.headers
+			// , headers: newHeaders
+			, jar:true
+		};
+		console.log('-> OPTIONS: '+JSON.stringify(options));
+		var post_req = https.request(options, function(res){
+			response.writeHead(res.statusCode,res.headers);
+				
+			var data = [];
+			res.on('data', function(chunk) {
+				data.push(chunk);
+				// response.write(chunk, 'binary');
+			}).on('end', function() {
+				//at this point data is an array of Buffers
+				//so Buffer.concat() can make us a new Buffer
+				//of all of them together
+				var buffer = Buffer.concat(data);
+				console.log(buffer.toString('base64'));
+				requestCount++;
+				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
+				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
+				// 1. Normalize the request
+				var normalized = {'path':webRequest.path, 'method':'post'};
+				// 2. Do Hash
+				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+				// 3. Create foldername in the format of num-hash-path
+				var foldername = requestCount + '_' + hash + '_' + filePath;
+				console.log(foldername);
+				// 4. Create folder
+				fs.mkdir(serviceName+'/'+foldername,function(){
+					// 5. Write file
+					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+						if (err) throw err;
+					});
+					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
+						if (err) throw err;
+					});
+					// 6. Send back the response
+					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+					console.log('-> Response Headers: '+JSON.stringify(res.headers));
+					// response.writeHead(res.statusCode,res.headers);
+					response.end(buffer, 'binary');
+				});
+			});
+		});
+			
+		// Send the post request with body
+		console.log('sent body:'+body);
+		post_req.write(body);
+		post_req.end();
+	}
+	else{
 	/////////////////////////////////
 	// One way to read the body from the request: aggregate the chunk
 	/////////////////////////////////
@@ -270,13 +339,13 @@ proxyApp.post('/*', function(webRequest, response) {
 	webRequest.setEncoding('binary');
 	webRequest.on('data', function(chunk) { 
 		testData += chunk;
-		console.log('chunk: '+chunk);
+		// console.log('chunk: '+chunk);
 	});
 
 	webRequest.on('end', function() {
-		console.log(testData);
+		// console.log(testData);
 		data = testData;
-		console.log('POST body:'+testData);
+		console.log('POST body(binary):'+testData);
 
 		/////////////////////////////////
 		////////////////////////////////
@@ -398,7 +467,7 @@ proxyApp.post('/*', function(webRequest, response) {
 					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
 						if (err) throw err;
 					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
+					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
 						if (err) throw err;
 					});
 					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
@@ -417,6 +486,7 @@ proxyApp.post('/*', function(webRequest, response) {
 
 		console.log('--------------------[ /simulation Request '+currentRequestNum+' ]---------------');
 	});
+	}
 
 });
 
