@@ -148,7 +148,7 @@ playerApp.get('/*', function(webRequest, response) {
 			// If a match is made, return the response for the request.
 			console.log(url +' VS '+firstRequest.path);
 			console.log('Does headers match: '+headerMatch);
-			if (url == firstRequest.path && headerMatch) {
+			if (headerMatch) {
 				// No use for this version
 				console.log("RESETING COUNTER\n\n"); 
 				requestCount = 1;
@@ -187,6 +187,7 @@ playerApp.get('/*', function(webRequest, response) {
 			}else{
 				console.log('No Match File Found');
 				console.log('URLMatch: '+ (url == firstRequest.path));
+				console.log('URL:'+ url + '/' + firstRequest.path);
 				console.log('headerMatch: '+ headerMatch);
 				response.write('No Match File Found with the same headers');
 				response.end();
@@ -239,9 +240,36 @@ playerApp.post('/*', function(webRequest, response) {
 			});
 		}
 	}
+	else if(webRequest.headers['content-type'] == 'application/json;charset=utf-8'){
+		// First parse the request and create its corresponding filepath
+		var url = webRequest.url;
+		var filename = url.replace(new RegExp('/', 'g'), '!');
+		// var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
+		var normalized = {'path':webRequest.path, 'method':'post'};
+		console.log('NORMALIZED:'+JSON.stringify(normalized));
+		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+		var hash_path = hash + '_' + filename;
+		console.log('HASH_PATH:'+hash_path);
+		var filePath = serviceName + '/'+map.get(hash_path)+'/Request'
+		var responseFilePath = filePath.replace('Request','Response');
+		console.log('ResponseFilePath:'+responseFilePath);
 
+		// var responseFilePath = 'test/57_b2f1698ef64f9deda720b24e715c4673_!vsphere-client!j_spring_security_check/Response';
+		fs.readFile(responseFilePath, 'utf8', function (err,data) {
+			if (err) {
+				console.log(err);
+				response.write('No Response file found: '+err.path);
+				response.end();
+			}
+			else{
+				console.log(data);
+				response.write(data);
+				response.end();
+			}
+		});
+	}
 
-
+	else {
 	var testData='';
 	webRequest.setEncoding('binary');
 	webRequest.on('data', function(chunk) { 
@@ -442,8 +470,8 @@ playerApp.post('/*', function(webRequest, response) {
 		}
 	});
 	// }, 1000);
-	// }
 	});
+	}
 });
 
 //---------------[ Start the Server ]---------------//

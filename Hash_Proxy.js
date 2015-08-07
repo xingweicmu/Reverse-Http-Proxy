@@ -128,42 +128,57 @@ proxyApp.get('/*', function(webRequest, response) {
 			})
 
 			res.on('end', function(){
-				
-				requestCount++;
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
-				
-				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'get'};
-				// var cookie = webRequest.headers['cookie'];
-				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
-				
-				// 2. Do Hash
-				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
-				
-				// 3. Create foldername in the format of num-hash-path
-				var foldername = requestCount + '_' + hash + '_' + filePath;
-				
-				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
+
+					requestCount++;
+					var rqst = {'path':webRequest.path, 'method':'get', 'headers':newHeaders};
 					
-					// 5. Write the request to file 
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) return console.log('ERR!!!'+err);
+					// 1. Normalize the request
+					var normalized = {'path':webRequest.path, 'method':'get'};
+					// var cookie = webRequest.headers['cookie'];
+					// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+					
+					// 2. Do Hash
+					var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
+					
+					// 3. Create foldername in the format of num-hash-path
+					var foldername = requestCount + '_' + hash + '_' + filePath;
+				
+				function endsWith(str, suffix) {
+					return str.indexOf(suffix, str.length - suffix.length) != -1;
+				}
+
+				if(!endsWith(foldername,'swf') && foldername.indexOf('vcc-ui') != -1){	
+					// requestCount++;
+					// 4. Create folder
+					fs.mkdir(serviceName+'/'+foldername,function(){
+						
+						// 5. Write the request to file 
+						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+							if (err) return console.log('ERR!!!'+err);
+						});
+
+						fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
+							if (err) return console.log('ERR!!!'+err);
+							console.log('File saved.')
+						})
+
+						fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+							if (err) throw err
+						})
+
+						// 6. Send back the data
+						response.writeHead(res.statusCode,res.headers);
+						response.end(imagedata, 'binary');
 					});
-
-					fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-						if (err) return console.log('ERR!!!'+err);
-						console.log('File saved.')
-					})
-
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
-						if (err) throw err
-					})
-
-					// 6. Send back the data
+					
+				}
+				else {
+					requestCount--;
 					response.writeHead(res.statusCode,res.headers);
 					response.end(imagedata, 'binary');
-				});
+				}
+
+			// });
 
 			})
 		})
@@ -196,7 +211,8 @@ proxyApp.post('/*', function(webRequest, response) {
 	console.log('POST Body:'+JSON.stringify(queryBody));
 	// console.log('Content-type: '+webRequest.headers['content-type']+'/'+webRequest.headers['Content-Type']);
 
-	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8'){
+	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8' 
+		|| webRequest.url == '/vsphere-client/vcc-ui/rest/hm/api/session'){
 		var body = JSON.stringify(webRequest.body);
 		console.log('POST Body(urlencoded):' + body);
 		var options = {
@@ -233,23 +249,31 @@ proxyApp.post('/*', function(webRequest, response) {
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				console.log(foldername);
 				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
-					// 5. Write file
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) throw err;
+				// Double check 
+				if( foldername.indexOf('vcc-ui') != -1){	
+					fs.mkdir(serviceName+'/'+foldername,function(){
+						// 5. Write file
+						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+							if (err) throw err;
+						});
+						fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+							if (err) throw err;
+						});
+						fs.writeFile(serviceName+'/'+foldername+'/Response', buffer, function (err) {
+							if (err) throw err;
+						});
+						// 6. Send back the response
+						// response.writeHead(cbresponse.statusCode,rtnHeaders);
+						console.log('-> Response Headers: '+JSON.stringify(res.headers));
+						// response.writeHead(res.statusCode,res.headers);
+						response.end(buffer, 'binary');
 					});
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
-						if (err) throw err;
-					});
-					// 6. Send back the response
-					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+				}
+				else{
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					// response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
-				});
+				}
 			});
 		});
 			
@@ -306,23 +330,23 @@ proxyApp.post('/*', function(webRequest, response) {
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				console.log(foldername);
 				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
-					// 5. Write file
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
-						if (err) throw err;
-					});
+				// fs.mkdir(serviceName+'/'+foldername,function(){
+				// 	// 5. Write file
+				// 	fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+				// 		if (err) throw err;
+				// 	});
+				// 	fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+				// 		if (err) throw err;
+				// 	});
+				// 	fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
+				// 		if (err) throw err;
+				// 	});
 					// 6. Send back the response
 					// response.writeHead(cbresponse.statusCode,rtnHeaders);
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					// response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
-				});
+				// });
 			});
 		});
 			
@@ -346,33 +370,6 @@ proxyApp.post('/*', function(webRequest, response) {
 		// console.log(testData);
 		data = testData;
 		console.log('POST body(binary):'+testData);
-
-		/////////////////////////////////
-		////////////////////////////////
-		// Right after we receive the body of the request, we put them into the hashmap
-		// var bodyString = testData.toString('utf8');
-		// console.log(bodyString);
-		// var index0 = testData.toString('utf8').indexOf('/');
-		// var index1 = index0+1;
-		// for(var i = index0+1; i<bodyString.length; i++){
-		// 	console.log('Char At: '+ bodyString.charAt(i));
-		// 	if(bodyString.charAt(i) <= '9' && bodyString.charAt(i) >= '0'){
-		// 		index1 = i;
-		// 	}else{
-		// 		break;
-		// 	}
-		// }
-		// var num = bodyString.substring(index0+1, index1+1);
-		// console.log('Sequence: '+ num);
-
-		// var key = webRequest.url+'_'+num;
-		// if(hashMap.has(key)){
-		// 	var ocu = hashMap.get(key)+1;
-		// 	hashMap.set(key, ocu);
-		// }else{
-		// 	hashMap.set(key, 1);
-		// }
-		///////////////////////////
 
 		var currentCount = requestCount;
 
@@ -421,6 +418,8 @@ proxyApp.post('/*', function(webRequest, response) {
 				console.log('BUFFER: '+buffer.toString('utf8'));
 
 				/////////////////////////
+				//Trt to parse amf and save them uniquely
+				/////////////////////////
 				var index0 = buffer.toString('utf8').indexOf('/');
 				var index = buffer.toString('utf8').indexOf('onResult');
 				console.log('Index: '+ index);
@@ -437,7 +436,7 @@ proxyApp.post('/*', function(webRequest, response) {
 				}
 				///////////////////////////
 
-				requestCount++;
+				// requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':testData};
 				// 1. Normalize the request
@@ -459,24 +458,24 @@ proxyApp.post('/*', function(webRequest, response) {
 				/////////////////
 
 				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
-					// 5. Write file
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
-						if (err) throw err;
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
-						if (err) throw err;
-					});
+				// fs.mkdir(serviceName+'/'+foldername,function(){
+				// 	// 5. Write file
+				// 	fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+				// 		if (err) throw err;
+				// 	});
+				// 	fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
+				// 		if (err) throw err;
+				// 	});
+				// 	fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
+				// 		if (err) throw err;
+				// 	});
 					// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
 					// 6. Send back the response
 					// response.writeHead(cbresponse.statusCode,rtnHeaders);
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
-				});
+				// });
 			});
 		});
 		
