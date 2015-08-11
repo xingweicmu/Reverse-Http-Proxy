@@ -1,21 +1,52 @@
+//---------------[ Default values ]---------------//
 var proxiedHost = 'http://127.0.0.1'
 var serviceName = 'Inventory';
 var requestCount=0;
-var responseCount=0;
 var listenPort=9999;
-var postCount=0;
+var configurationFilename = null;
+var protocol = '';
+var filter = '';
+var directory = '';
 
 process.argv.forEach(function (val, index, array) {
-	if(index==2){
-		proxiedHost=val;
-	}
-	if(index==3){
-		serviceName = val;
-	}
-	if(index==4){
-		listenPort = val;
+	// if(index==2){
+	// 	proxiedHost=val;
+	// }
+	// if(index==3){
+	// 	serviceName = val;
+	// }
+	// if(index==4){
+	// 	listenPort = val;
+	// }
+	if(index = 2){
+		configurationFilename = val;
 	}
 });
+//---------------[ Setup Dependencies ]---------------//
+var express = require('express');
+var bodyParser = require("body-parser");
+var http = require('http');
+var path = require('path');
+var os=require('os');
+var fs = require('fs');
+var https = require('https');
+var HashMap = require('hashmap');
+
+//---------------[ Read parameters from configuration file]---------------//
+var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
+console.log('Configuration for Proxy:')
+console.log('-proxy_port:'+parameters['proxy_port']);
+console.log('-proxied_host:'+parameters['proxied_host']);
+console.log('-protocol:'+parameters['protocol']);
+console.log('-directory:'+parameters['directory']);
+console.log('-filter:'+parameters['filter']);
+
+listenPort = parameters['proxy_port'];
+proxiedHost = parameters['proxied_host'];
+protocol = parameters['protocol'];
+directory = parameters['directory'];
+filter = parameters['filter'];
+serviceName = directory;
 
 //---------------[ Parse the url to be proxied]---------------//
 var parts = proxiedHost.split(':');
@@ -33,17 +64,8 @@ else if(parts.length == 3){
 console.log('Proxying for host: '+hostName + ' on '+ portNumber);
 console.log('Proxying for service: '+serviceName);
 
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-//---------------[ Setup Dependencies ]---------------//
-var express = require('express');
-var bodyParser = require("body-parser");
-var http = require('http');
-var path = require('path');
-var os=require('os');
-var fs = require('fs');
-var https = require('https');
-var HashMap = require('hashmap');
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 //---------------[ Create the Folder ]---------------//
 fs.mkdir(serviceName,function(){});
@@ -143,40 +165,46 @@ proxyApp.get('/*', function(webRequest, response) {
 					// 3. Create foldername in the format of num-hash-path
 					var foldername = requestCount + '_' + hash + '_' + filePath;
 					console.log('Count'+requestCount+':'+foldername);
-				function endsWith(str, suffix) {
-					return str.indexOf(suffix, str.length - suffix.length) != -1;
-				}
 
-				if(!endsWith(foldername,'swf') && foldername.indexOf('vcc-ui') != -1){	
-					// requestCount++;
-					// 4. Create folder
-					fs.mkdir(serviceName+'/'+foldername,function(){
-						
-						// 5. Write the request to file 
-						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-							if (err) return console.log('ERR!!!'+err);
+					//---------------[ Helpers function ]---------------//
+					function endsWith(str, suffix) {
+						return str.indexOf(suffix, str.length - suffix.length) != -1;
+					}
+
+					// Filter /vcc-ui/
+					console.log('FILTER:'+filter);
+					filter = filter.replace(new RegExp('/', 'g'), '!');
+					console.log('FILTER:'+filter);
+					if(!endsWith(foldername,'swf') && foldername.indexOf(filter) != -1){	
+						// requestCount++;
+						// 4. Create folder
+						fs.mkdir(serviceName+'/'+foldername,function(){
+							// requestCount++;
+							// 5. Write the request to file 
+							fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+								if (err) return console.log('ERR!!!'+err);
+							});
+
+							fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
+								if (err) return console.log('ERR!!!'+err);
+								console.log('File saved.')
+							})
+
+							fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+								if (err) throw err
+							})
+
+							// 6. Send back the data
+							response.writeHead(res.statusCode,res.headers);
+							response.end(imagedata, 'binary');
 						});
-
-						fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-							if (err) return console.log('ERR!!!'+err);
-							console.log('File saved.')
-						})
-
-						fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
-							if (err) throw err
-						})
-
-						// 6. Send back the data
+						
+					}
+					else {
+						requestCount--;
 						response.writeHead(res.statusCode,res.headers);
 						response.end(imagedata, 'binary');
-					});
-					
-				}
-				else {
-					requestCount--;
-					response.writeHead(res.statusCode,res.headers);
-					response.end(imagedata, 'binary');
-				}
+					}
 
 			// });
 
@@ -212,7 +240,7 @@ proxyApp.post('/*', function(webRequest, response) {
 	// console.log('Content-type: '+webRequest.headers['content-type']+'/'+webRequest.headers['Content-Type']);
 
 	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8' 
-		|| webRequest.url == '/vsphere-client/vcc-ui/rest/hm/api/session'){
+		|| webRequest.url == '/vsphere-client/vcc-ui/rest/hm/api/session'){	// Trade-off for vsphere
 		var body = JSON.stringify(webRequest.body);
 		console.log('POST Body(urlencoded):' + body);
 		var options = {
@@ -250,7 +278,8 @@ proxyApp.post('/*', function(webRequest, response) {
 				console.log(foldername);
 				// 4. Create folder
 				// Double check 
-				if( foldername.indexOf('vcc-ui') != -1){	
+				filter = filter.replace(new RegExp('/', 'g'), '!');
+				if( foldername.indexOf(filter) != -1){	
 					fs.mkdir(serviceName+'/'+foldername,function(){
 						// 5. Write file
 						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
@@ -270,6 +299,7 @@ proxyApp.post('/*', function(webRequest, response) {
 					});
 				}
 				else{
+					requestCount--;
 					console.log('-> Response Headers: '+JSON.stringify(res.headers));
 					// response.writeHead(res.statusCode,res.headers);
 					response.end(buffer, 'binary');
@@ -317,7 +347,7 @@ proxyApp.post('/*', function(webRequest, response) {
 				//of all of them together
 				var buffer = Buffer.concat(data);
 				console.log(buffer.toString('base64'));
-				requestCount++;
+				// requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
 				// 1. Normalize the request
@@ -497,6 +527,6 @@ var httpServer = http.createServer(proxyApp);
 var httpsServer = https.createServer(credentials, proxyApp);
 
 httpServer.listen(9997);
-httpsServer.listen(9996);
+httpsServer.listen(listenPort);
 
 

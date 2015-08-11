@@ -1,20 +1,23 @@
-
 var serviceName = 'NA';
 var requestCount=1;
 var listenPort=9999;
 var firstRequest=null;
+var configurationFilename = '';
 
 process.argv.forEach(function (val, index, array) {
-	if(index==2){
-		serviceName = val;
-	}
-	if(index==3){
-		listenPort = val;
+	// if(index==2){
+	// 	serviceName = val;
+	// }
+	// if(index==3){
+	// 	listenPort = val;
+	// }
+	if(index == 2){
+		configurationFilename = val;
 	}
 });
 
 
-console.log('Proxying for service:'+serviceName);
+// console.log('Proxying for service:'+serviceName);
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
@@ -27,6 +30,15 @@ var path = require('path');
 var os=require('os');
 var fs = require('fs');
 var HashMap = require('hashmap');
+
+//---------------[ Read parameters from configuration file]---------------//
+var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
+console.log('Configuration for Player:')
+console.log('-player_port:'+parameters['player_port']);
+console.log('-protocol:'+parameters['protocol']);
+console.log('-directory:'+parameters['directory']);
+listenPort = parameters['player_port'];
+serviceName = parameters['directory'];
 
 
 //---------------[ Create the Application ]---------------//
