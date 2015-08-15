@@ -1,27 +1,30 @@
+exports.test = function test(filename){
 //---------------[ Default values ]---------------//
 var proxiedHost = 'http://127.0.0.1'
 var serviceName = 'Inventory';
 var requestCount=0;
 var listenPort=9999;
-var configurationFilename = null;
+// var configurationFilename = 'proxy.json';
+var configurationFilename = filename;
 var protocol = '';
 var filter = '';
 var directory = '';
-
-process.argv.forEach(function (val, index, array) {
-	// if(index==2){
-	// 	proxiedHost=val;
-	// }
-	// if(index==3){
-	// 	serviceName = val;
-	// }
-	// if(index==4){
-	// 	listenPort = val;
-	// }
-	if(index = 2){
-		configurationFilename = val;
-	}
-});
+console.log(filename);
+// process.argv.forEach(function (val, index, array) {
+// 	// if(index==2){
+// 	// 	proxiedHost=val;
+// 	// }
+// 	// if(index==3){
+// 	// 	serviceName = val;
+// 	// }
+// 	// if(index==4){
+// 	// 	listenPort = val;
+// 	// }
+// 	if(index = 3){
+// 		configurationFilename = val;
+// 		console.log(val);
+// 	}
+// });
 //---------------[ Setup Dependencies ]---------------//
 var express = require('express');
 var bodyParser = require("body-parser");
@@ -31,6 +34,8 @@ var os=require('os');
 var fs = require('fs');
 var https = require('https');
 var HashMap = require('hashmap');
+
+// exports.test = function(){
 
 //---------------[ Read parameters from configuration file]---------------//
 var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
@@ -265,7 +270,7 @@ proxyApp.post('/*', function(webRequest, response) {
 				//so Buffer.concat() can make us a new Buffer
 				//of all of them together
 				var buffer = Buffer.concat(data);
-				console.log(buffer.toString('base64'));
+				// console.log(buffer.toString('base64'));
 				requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
@@ -346,7 +351,7 @@ proxyApp.post('/*', function(webRequest, response) {
 				//so Buffer.concat() can make us a new Buffer
 				//of all of them together
 				var buffer = Buffer.concat(data);
-				console.log(buffer.toString('base64'));
+				// console.log(buffer.toString('base64'));
 				// requestCount++;
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
@@ -444,7 +449,7 @@ proxyApp.post('/*', function(webRequest, response) {
 					//so Buffer.concat() can make us a new Buffer
 					//of all of them together
 					var buffer = Buffer.concat(data);
-					console.log('BUFFER: '+buffer.toString('utf8'));
+					// console.log('BUFFER: '+buffer.toString('utf8'));
 
 					/////////////////////////
 					//Trt to parse amf and save them uniquely
@@ -528,5 +533,8 @@ var httpsServer = https.createServer(credentials, proxyApp);
 
 httpServer.listen(9997);
 httpsServer.listen(listenPort);
+// console.log('Proxy server listening on port ' + listenPort);
+}
+
 
 

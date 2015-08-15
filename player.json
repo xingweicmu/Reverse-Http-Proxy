@@ -1,0 +1,5 @@
+{
+	"player_port": "9996",
+	"protocol":"https",
+	"directory":"test"
+}

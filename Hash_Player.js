@@ -79,7 +79,11 @@ if ('development' == playerApp.get('env')) {
 
 //---------------[ Prepare the filepath to be read in the target folder ]---------------//
 fs.readdir(serviceName, function(err, list) {
-	if (err) return console.log(err);
+	if (err) {
+		console.log('Error!')
+		console.log('Detail: '+JSON.stringify(err));
+		process.exit();
+	}
 	requestList = list;
 	
 	// First sort the requestList, put them in sortMap

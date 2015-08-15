@@ -1,0 +1,6 @@
+{
+	"destination": "https://10.33.120.58:9443",
+	"protocol":"https",
+	"directory":"test",
+	"interval":"500"
+}

@@ -1,23 +1,48 @@
 var proxiedHost = 'http://127.0.0.1'
 var serviceName = 'Inventory';
-var requestCount=0;
-var responseCount=0;
-var listenPort=9999;
+// var requestCount=0;
+// var responseCount=0;
+// var listenPort=9999;
 var firstRequest = null;
 var interval = 500;
+var configurationFilename = '';
 
 process.argv.forEach(function (val, index, array) {
 	//console.log(index + ': ' + val);
-	if(index==2){
-		proxiedHost=val;
-	}
-	if(index==3){
-		serviceName = val;
-	}
-	if(index == 4){
-		interval = val;
+	// if(index==2){
+	// 	proxiedHost=val;
+	// }
+	// if(index==3){
+	// 	serviceName = val;
+	// }
+	// if(index == 4){
+	// 	interval = val;
+	// }
+	if(index == 2){
+		configurationFilename = val;
 	}
 });
+
+//---------------[ Setup Dependencies ]---------------//
+var express = require('express');
+var bodyParser = require("body-parser");
+var http = require('http');
+var path = require('path');
+var os=require('os');
+var fs = require('fs');
+var request = require('request');
+var HashMap = require('hashmap');
+
+//---------------[ Read parameters from configuration file]---------------//
+var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
+console.log('Configuration for Sender:')
+console.log('-destination:'+parameters['destination']);
+console.log('-protocol:'+parameters['protocol']);
+console.log('-directory:'+parameters['directory']);
+console.log('-interval:'+parameters['interval']);
+serviceName = parameters['directory'];
+proxiedHost = parameters['destination'];
+interval = parameters['interval'];
 
 //---------------[ Parse the url to be proxied]---------------//
 var parts = proxiedHost.split(':');
@@ -37,37 +62,28 @@ console.log('Sending requests to destination: '+hostName + ' on '+ portNumber);
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-//---------------[ Setup Dependencies ]---------------//
-var express = require('express');
-var bodyParser = require("body-parser");
-var http = require('http');
-var path = require('path');
-var os=require('os');
-var fs = require('fs');
-var request = require('request');
-var HashMap = require('hashmap');
 
 fs.mkdir(serviceName,function(){});
 
-//---------------[ Create the Application ]---------------//
-var proxyApp = express();
-proxyApp.set('port', process.env.PORT || listenPort);
-proxyApp.set('views', path.join(__dirname, 'views'));
-proxyApp.set('view engine', 'ejs');
-proxyApp.engine('html', require('ejs').renderFile);
-proxyApp.use(express.logger('dev'));
-proxyApp.use(express.json());
-proxyApp.use(express.urlencoded());
-proxyApp.use(express.methodOverride());
-proxyApp.use(proxyApp.router);
-proxyApp.use(express.static(path.join(__dirname, 'public')));
-proxyApp.use(express.bodyParser());
-proxyApp.use(bodyParser.urlencoded({ extended: false }));
+// ---------------[ Create the Application ]---------------//
+// var proxyApp = express();
+// proxyApp.set('port', process.env.PORT || listenPort);
+// proxyApp.set('views', path.join(__dirname, 'views'));
+// proxyApp.set('view engine', 'ejs');
+// proxyApp.engine('html', require('ejs').renderFile);
+// proxyApp.use(express.logger('dev'));
+// proxyApp.use(express.json());
+// proxyApp.use(express.urlencoded());
+// proxyApp.use(express.methodOverride());
+// proxyApp.use(proxyApp.router);
+// proxyApp.use(express.static(path.join(__dirname, 'public')));
+// proxyApp.use(express.bodyParser());
+// proxyApp.use(bodyParser.urlencoded({ extended: false }));
 
-//---------------[ Used for Development Only ]---------------//
-if ('development' == proxyApp.get('env')) {
-	proxyApp.use(express.errorHandler());
-}
+// //---------------[ Used for Development Only ]---------------//
+// if ('development' == proxyApp.get('env')) {
+// 	proxyApp.use(express.errorHandler());
+// }
 	
 var requestList = null;
 var map = new HashMap();
@@ -75,7 +91,11 @@ var sortMap = new HashMap();
 
 //---------------[ Read from targeted service directory ]---------------//
 fs.readdir(serviceName, function(err, list) {
-	if (err) return console.log(err);
+	if (err) {
+		console.log('Error!')
+		console.log('Detail: '+JSON.stringify(err));
+		process.exit();
+	}
 	requestList = list;
 
 	// First to sort the requestList, put them in sortMap

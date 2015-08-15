@@ -1,0 +1,7 @@
+{
+	"proxy_port": "9996",
+	"proxied_host":"https://10.33.120.58:9443",
+	"protocol":"https",
+	"directory":"test",
+	"filter":"vcc-ui"
+}
