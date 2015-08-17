@@ -1,28 +1,24 @@
 exports.test = function test(filename){
-	//---------------[ Global variables with default values]---------------//
-	// All the global variables set up here are for the invocation of middleware.
-	// All of them could be replaced using another way: exports.requestCount = requestCount;
-	proxiedHost = 'http://127.0.0.1'
-	serviceName = 'Inventory';
-	requestCount=0;
-	filter = '';
-	directory = '';
-
-	//---------------[ Local variables ]---------------//
-	// All the local variables are used to set up the express server.
-	var listenPort = 9999;
-	var configurationFilename = filename;
-	var protocol = '';
 
 	//---------------[ Setup Dependencies ]---------------//
 	var express = require('express');
 	var http = require('http');
 	var path = require('path');
-	bodyParser = require("body-parser");
-	fs = require('fs');
-	https = require('https');
-	HashMap = require('hashmap');
-	hashMap = new HashMap();
+	var fs = require('fs');
+	var bodyParser = require("body-parser");
+	var https = require('https');
+
+	//---------------[ Global variables with default values]---------------//
+	// These variables should be shared across the proxy - they would be accessed by middlewares
+	requestCount = 0;
+	shared_hostName = '';
+	shared_portNumber = '';
+	shared_directory = '';
+	shared_filter = '';
+
+	//---------------[ Local variables ]---------------//
+	// These variables are only used by the proxy server locally
+	var configurationFilename = filename;
 
 	//---------------[ Read parameters from configuration file]---------------//
 	var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
@@ -33,17 +29,18 @@ exports.test = function test(filename){
 	console.log('-directory:'+parameters['directory']);
 	console.log('-filter:'+parameters['filter']);
 
-	listenPort = parameters['proxy_port'];
-	proxiedHost = parameters['proxied_host'];
-	protocol = parameters['protocol'];
-	directory = parameters['directory'];
-	filter = parameters['filter'];
-	serviceName = directory;
+	var listenPort = parameters['proxy_port'];
+	var proxiedHost = parameters['proxied_host'];
+	var protocol = parameters['protocol'];
+	var directory = parameters['directory'];
+	var filter = parameters['filter'];
+	shared_filter = filter;
+	shared_directory = directory;
 
 	//---------------[ Parse the url to be proxied]---------------//
 	var parts = proxiedHost.split(':');
-	hostName = '';
-	portNumber = '';
+	var hostName = '';
+	var portNumber = '';
 	if(parts.length == 2){
 		hostName = parts[1].substring(2);
 		portNumber = 80;
@@ -52,15 +49,17 @@ exports.test = function test(filename){
 		hostName = parts[1].substring(2);
 		portNumber = parts[2];
 	}
+	shared_hostName = hostName;
+	shared_portNumber = portNumber;
 
 	console.log('Proxying for host: '+hostName + ' on '+ portNumber);
-	console.log('Proxying for service: '+serviceName);
+	console.log('Proxying for service: '+shared_directory);
 
 
 	process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 	//---------------[ Create the Folder ]---------------//
-	fs.mkdir(serviceName,function(){});
+	fs.mkdir(shared_directory,function(){});
 
 	//---------------[ Create the Application ]---------------//
 	var proxyApp = express();

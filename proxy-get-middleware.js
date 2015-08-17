@@ -1,16 +1,16 @@
 exports.getHandler = function getHandler(webRequest, response, next) {
 
-	///////////////////////
-	// var requestCount = require('./Hash_Proxy.js').requestCount;
-	console.log(requestCount);
-	// var hostName
-	///////////////////////
+	// Set up dependency
+	var bodyParser = require("body-parser");
+	var fs = require('fs');
+	var https = require('https');
 
-	var request = require('request').debug=true;
-	console.log('GET Request:'+webRequest.url);
-	
-	var request = require('request');
-	var jar = request.jar();
+	// Get parameters from the server
+	var filter = shared_filter;
+	var serviceName = shared_directory;
+	var hostName = shared_hostName;
+	var portNumber = shared_portNumber;
+
 	var headers = webRequest.headers;
 	var currentRequestNum = requestCount;
 	var data = '';
@@ -18,9 +18,6 @@ exports.getHandler = function getHandler(webRequest, response, next) {
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('GET Request:'+webRequest.url);
 	console.log('GET Headers:'+JSON.stringify(headers));
-
-	var currentCount = requestCount;
-	console.log('###'+currentCount);
 
 	// Create new headers based on webReqeust.headers by removing browser-based info
 	var newHeaders = {};

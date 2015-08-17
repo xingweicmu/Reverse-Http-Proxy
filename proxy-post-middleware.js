@@ -1,29 +1,28 @@
 exports.postHandler = function postHandler(webRequest, response, next) {
 
-	
-	///////////////////////
-	// Before doing everything, let's try to save the request in a HashMap
-	// var key = webRequest.url;
-	// if(hashMap.has(key)){
-	// 	var ocu = hashMap.get(key)+1;
-	// 	hashMap.set(key, ocu);
-	// }else{
-	// 	hashMap.set(key, 1);
-	// }
-	///////////////////////
+	// Set up dependencies
+	var bodyParser = require("body-parser");
+	var fs = require('fs');
+	var https = require('https');
+	var HashMap = require('hashmap');
 
-	var request = require('request');
-	var jar = request.jar();
+
+	// Get parameters from the server
+	var filter = shared_filter;
+	var serviceName = shared_directory;
+	var hostName = shared_hostName;
+	var portNumber = shared_portNumber;
+
+	var hashMap = new HashMap();
+	var data = '';
 	var headers = webRequest.headers;
 	var currentRequestNum = requestCount;
-	var data = '';
 	var queryBody = webRequest.body;
 	
 	console.log('--------------------[ simulation Request '+currentRequestNum+ ' ]---------------');
 	console.log('POST Request:'+webRequest.url);
 	console.log('POST Headers:'+JSON.stringify(headers));
 	console.log('POST Body:'+JSON.stringify(queryBody));
-	// console.log('Content-type: '+webRequest.headers['content-type']+'/'+webRequest.headers['Content-Type']);
 
 	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8' 
 		|| webRequest.url == '/vsphere-client/vcc-ui/rest/hm/api/session'){	// Trade-off for vsphere
@@ -106,9 +105,7 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 		var json = webRequest.body;
 		var test = urlcodeJson.encode(json, true);
 		var body = test.replace(/_/g,'%5F');
-		// if(JSON.stringify(webRequest.body).length = 2) {
-		// 	body = JSON.stringify(webRequest.body);
-		// }
+
 		console.log('POST Body(urlencoded):' + body);
 		var options = {
 			host: hostName
@@ -143,24 +140,12 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				console.log(foldername);
-				// 4. Create folder
-				// fs.mkdir(serviceName+'/'+foldername,function(){
-				// 	// 5. Write file
-				// 	fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-				// 		if (err) throw err;
-				// 	});
-				// 	fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
-				// 		if (err) throw err;
-				// 	});
-				// 	fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
-				// 		if (err) throw err;
-				// 	});
-					// 6. Send back the response
-					// response.writeHead(cbresponse.statusCode,rtnHeaders);
-					console.log('-> Response Headers: '+JSON.stringify(res.headers));
-					// response.writeHead(res.statusCode,res.headers);
-					response.end(buffer, 'binary');
-				// });
+
+				// 4. Send back the response without saving
+				// response.writeHead(cbresponse.statusCode,rtnHeaders);
+				console.log('-> Response Headers: '+JSON.stringify(res.headers));
+				// response.writeHead(res.statusCode,res.headers);
+				response.end(buffer, 'binary');
 			});
 		});
 			
@@ -270,27 +255,12 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 					if (endsWith(foldername, 'amfsecure')){
 						foldername = foldername + '_'+num+'_'+hashMap.get(webRequest.url+'_'+num);
 					}
-					/////////////////
 
-					// 4. Create folder
-					// fs.mkdir(serviceName+'/'+foldername,function(){
-					// 	// 5. Write file
-					// 	fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-					// 		if (err) throw err;
-					// 	});
-					// 	fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), function (err) {
-					// 		if (err) throw err;
-					// 	});
-					// 	fs.writeFile(serviceName+'/'+foldername+'/Response', buffer.toString('base64'), function (err) {
-					// 		if (err) throw err;
-					// 	});
-						// console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-						// 6. Send back the response
-						// response.writeHead(cbresponse.statusCode,rtnHeaders);
-						console.log('-> Response Headers: '+JSON.stringify(res.headers));
-						response.writeHead(res.statusCode,res.headers);
-						response.end(buffer, 'binary');
-					// });
+					// 6. Send back the response without saving
+					// response.writeHead(cbresponse.statusCode,rtnHeaders);
+					console.log('-> Response Headers: '+JSON.stringify(res.headers));
+					response.writeHead(res.statusCode,res.headers);
+					response.end(buffer, 'binary');
 				});
 			});
 			
