@@ -1,23 +1,11 @@
 var proxiedHost = 'http://127.0.0.1'
 var serviceName = 'Inventory';
-// var requestCount=0;
-// var responseCount=0;
-// var listenPort=9999;
 var firstRequest = null;
 var interval = 500;
 var configurationFilename = '';
 
 process.argv.forEach(function (val, index, array) {
-	//console.log(index + ': ' + val);
-	// if(index==2){
-	// 	proxiedHost=val;
-	// }
-	// if(index==3){
-	// 	serviceName = val;
-	// }
-	// if(index == 4){
-	// 	interval = val;
-	// }
+
 	if(index == 2){
 		configurationFilename = val;
 	}
@@ -61,35 +49,11 @@ console.log('Reading requests from service: '+serviceName);
 console.log('Sending requests to destination: '+hostName + ' on '+ portNumber);
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-
-
-fs.mkdir(serviceName,function(){});
-
-// ---------------[ Create the Application ]---------------//
-// var proxyApp = express();
-// proxyApp.set('port', process.env.PORT || listenPort);
-// proxyApp.set('views', path.join(__dirname, 'views'));
-// proxyApp.set('view engine', 'ejs');
-// proxyApp.engine('html', require('ejs').renderFile);
-// proxyApp.use(express.logger('dev'));
-// proxyApp.use(express.json());
-// proxyApp.use(express.urlencoded());
-// proxyApp.use(express.methodOverride());
-// proxyApp.use(proxyApp.router);
-// proxyApp.use(express.static(path.join(__dirname, 'public')));
-// proxyApp.use(express.bodyParser());
-// proxyApp.use(bodyParser.urlencoded({ extended: false }));
-
-// //---------------[ Used for Development Only ]---------------//
-// if ('development' == proxyApp.get('env')) {
-// 	proxyApp.use(express.errorHandler());
-// }
 	
+//---------------[ Prepare to read and send ]---------------//
 var requestList = null;
 var map = new HashMap();
 var sortMap = new HashMap();
-
-//---------------[ Read from targeted service directory ]---------------//
 fs.readdir(serviceName, function(err, list) {
 	if (err) {
 		console.log('Error!')
@@ -103,7 +67,6 @@ fs.readdir(serviceName, function(err, list) {
 		var key = requestList[i].substring(0, requestList[i].indexOf('_'));
 		var value = requestList[i];
 		sortMap.set(key, value);
-		// console.log(key + ' ' + value);
 	}
 
 	// Print out the requests to be sent
@@ -171,6 +134,7 @@ function readAndSend(num){
 					, headers: newHeaders
 					, jar: true
 				};
+				console.log(JSON.stringify(options));
 				request(options, function (error, resp, body) {
 					if (!error) {
 						console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+' ]---------------');
