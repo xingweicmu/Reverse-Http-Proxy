@@ -20,8 +20,8 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 		// First parse the request and create its corresponding filepath
 		var url = webRequest.url;
 		var filename = url.replace(new RegExp('/', 'g'), '!');
-		// var normalized = {'path':webRequest.path, 'method':'post', 'body':testData};
-		var normalized = {'path':webRequest.path, 'method':'post'};
+		// var normalized = {'path':webRequest.path, 'method':'post'};
+		var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
 		console.log('NORMALIZED:'+JSON.stringify(normalized));
 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 		var hash_path = hash + '_' + filename;
