@@ -1,4 +1,4 @@
-exports.test = function test(filename){
+exports.test = function test(para_port, para_host, para_directory, para_filter){
 
 	//---------------[ Setup Dependencies ]---------------//
 	var express = require('express');
@@ -17,38 +17,32 @@ exports.test = function test(filename){
 	shared_filter = '';
 
 	//---------------[ Local variables ]---------------//
-	// These variables are only used by the proxy server locally
-	var configurationFilename = filename;
+	var listenPort = para_port;
+	var proxiedHost = para_host;
+	var directory = para_directory;
+	var filter = para_filter;
+	var hostName = '';
+	var portNumber = 80;
+	var protocol = '';
 
-	//---------------[ Read parameters from configuration file]---------------//
-	var parameters = JSON.parse(fs.readFileSync(configurationFilename, 'utf8'));
-	console.log('Configuration for Proxy:')
-	console.log('-proxy_port:'+parameters['proxy_port']);
-	console.log('-proxied_host:'+parameters['proxied_host']);
-	console.log('-protocol:'+parameters['protocol']);
-	console.log('-directory:'+parameters['directory']);
-	console.log('-filter:'+parameters['filter']);
-
-	var listenPort = parameters['proxy_port'];
-	var proxiedHost = parameters['proxied_host'];
-	var protocol = parameters['protocol'];
-	var directory = parameters['directory'];
-	var filter = parameters['filter'];
+	//---------------[ Set values for Global variables ]---------------//
+	// Passing local variable to global variable for middleware
 	shared_filter = filter;
 	shared_directory = directory;
 
 	//---------------[ Parse the url to be proxied]---------------//
 	var parts = proxiedHost.split(':');
-	var hostName = '';
-	var portNumber = '';
 	if(parts.length == 2){
+		protocol = parts[0];
 		hostName = parts[1].substring(2);
-		portNumber = 80;
+		// portNumber = 80;
 	}
 	else if(parts.length == 3){
+		protocol = parts[0];
 		hostName = parts[1].substring(2);
 		portNumber = parts[2];
 	}
+	// console.log(":"+protocol);
 	shared_hostName = hostName;
 	shared_portNumber = portNumber;
 
@@ -73,7 +67,8 @@ exports.test = function test(filename){
 	proxyApp.use(express.methodOverride());
 	proxyApp.use(proxyApp.router);
 	proxyApp.use(express.static(path.join(__dirname, 'public')));
-	proxyApp.use(express.bodyParser());
+	// proxyApp.use(express.bodyParser());
+	proxyApp.use(express.json());
 	proxyApp.use(bodyParser.urlencoded({ extended: true }));
 
 	//---------------[ Used for Development Only ]---------------//
