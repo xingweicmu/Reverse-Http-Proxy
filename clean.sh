@@ -1,7 +1,7 @@
 # // node Hash_Proxy.js https://en.wikipedia.org:443 wiki 9997
 
 
-DIR=/Users/xingw/Project/main/simulation/proxy/test
+DIR=$1
 if [ -d "$DIR" ]; then
     printf '%s\n' "Removing ($DIR) ..."
     rm -rf "$DIR"
