@@ -22,7 +22,13 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 		var url = webRequest.url;
 		var filename = url.replace(new RegExp('/', 'g'), '!');
 		// var normalized = {'path':webRequest.path, 'method':'post'};
-		var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
+		if(webRequest.method != 'POST'){
+			console.log('METHOD:'+webRequest.method);
+			var normalized = {'path':webRequest.path, 'method':'put', 'body':JSON.stringify(webRequest.body)};
+		}else{
+			var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
+		}
+		
 		// console.log('NORMALIZED:'+JSON.stringify(normalized));
 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 		var hash_path = hash + '_' + filename;
@@ -32,14 +38,14 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 		console.log('ResponseFilePath:'+responseFilePath);
 
 		fs.readFile(filePath, 'utf-8', function(err,data) {
-  		if (err) {
-    		console.log(err);
-    		response.write('No Request file found: '+err.path);
-    		response.end();
-  		}
-  		else {
+		if (err) {
+			console.log(err);
+			response.write('No Request file found: '+err.path);
+			response.end();
+		}
+		else {
 
-	  		firstRequest = JSON.parse(data);
+			firstRequest = JSON.parse(data);
 
 			// Add the request count
 			requestCount++;
@@ -63,14 +69,14 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 			}
 			console.log('Do Headers Match:'+headerMatch);
 
-		    var hdrs = {'headers':headers};
-		    var data = '';
-		    console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
+			var hdrs = {'headers':headers};
+			var data = '';
+			console.log('--------------------[ simulation POST Request '+requestCount+ ' ]---------------');
 			console.log('POST Request:'+url);
 			console.log('POST Headers:'+JSON.stringify(webRequest.headers));
 			console.log('POST Body:'+JSON.stringify(webRequest.body));
 
-		    data = JSON.stringify(webRequest.body);
+			data = JSON.stringify(webRequest.body);
 			console.log('POST Body:\n'+data+'\nAGAINST:\n'+firstRequest.body);
 			var dataMatch = false;
 
@@ -81,14 +87,14 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 			}
 
 			// Check the request path, method type, headers and body to the firstRequest attributes.
-		    // If a match is made, return the response for the request.
-		    if (headerMatch && dataMatch) {
-		    //////////////////////////////////////////////////////////
-		    	// The counter is no use for this version
-		        console.log("RESETING COUNTER\n\n"); 
-		        // requestCount = 1;
-		    
-		        // If there is a match, read the file and send the response back
+			// If a match is made, return the response for the request.
+			if (headerMatch && dataMatch) {
+			//////////////////////////////////////////////////////////
+				// The counter is no use for this version
+				console.log("RESETING COUNTER\n\n"); 
+				// requestCount = 1;
+		
+				// If there is a match, read the file and send the response back
 				fs.readFile(responseFilePath, 'utf8', function (err,data) {
 					if (err) {
 						console.log(err);

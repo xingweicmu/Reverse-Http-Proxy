@@ -45,10 +45,12 @@ exports.putHandler = function putHandler(webRequest, response, next) {
 		requestCount++;
 
 		var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
-		var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+		// var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':data};
+		var rqst = {'path':webRequest.path, 'method':'put', 'headers':webRequest.headers, 'body':data};
 
 		// 1. Normalize the request
-		var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
+		// var normalized = {'path':webRequest.path, 'method':'post', 'body':data};
+		var normalized = {'path':webRequest.path, 'method':'put', 'body':data};
 		// 2. Do Hash
 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 		// 3. Create foldername in the format of num-hash-path

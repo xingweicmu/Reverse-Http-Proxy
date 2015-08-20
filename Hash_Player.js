@@ -86,13 +86,16 @@ exports.startPlayer = function startPlayer(para_port, para_directory, para_host,
 
 		//---------------[ Print out the start point ]---------------//
 		console.log('\n---------------[ Start Points ]------------------');
-		var startPointArray = startPoint.split(',');
-		for(var j = 0; j < startPointArray.length; j++){
-			var theStartPoint = startPointArray[j].replace(new RegExp('/', 'g'), '!');
-			for(var i = 0; i < requestList.length; i++ ){
-				if(requestList[i].indexOf(theStartPoint) > -1){
-					var path = requestList[i].substring(requestList[i].indexOf(theStartPoint)).replace(new RegExp('!', 'g'), '/');
-					console.log(protocol+'://localhost:'+listenPort+path);
+		// console.log(startPoint.length);
+		if(startPoint.length != 0){
+			var startPointArray = startPoint.split(',');
+			for(var j = 0; j < startPointArray.length; j++){
+				var theStartPoint = startPointArray[j].replace(new RegExp('/', 'g'), '!');
+				for(var i = 0; i < requestList.length; i++ ){
+					if(requestList[i].indexOf(theStartPoint) > -1){
+						var path = requestList[i].substring(requestList[i].indexOf(theStartPoint)).replace(new RegExp('!', 'g'), '/');
+						console.log(protocol+'://localhost:'+listenPort+path);
+					}
 				}
 			}
 		}

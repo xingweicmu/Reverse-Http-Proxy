@@ -155,6 +155,26 @@ exports.startSender = function startSender(para_destination, para_directory, par
 						}
 					});	
 				}
+				else if(readMethod == 'PUT' || readMethod == 'put') {
+					var options = {
+						uri:proxiedHost + readPath
+						, headers: newHeaders
+						, body:readBody
+						, jar: true
+					};
+					request.put(options, function (error, resp, body) {
+						if (!error) {
+							// console.log(options);
+							console.log('---------------[ Sent Request: '+readMethod + ' ' +readPath+']----------------');
+							console.log('---------------[ Response from Server ]---------------');
+							console.log(body);
+						}
+						else{
+							console.log('ERROR: '+error);
+						}
+					});	
+				}
+
 				else {
 					console.log('Unrecognized Request: '+readMethod);
 				}
