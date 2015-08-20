@@ -2,19 +2,31 @@ module.exports = function (grunt) {
 
 	grunt.initConfig({
 	  json: {
-	  	"proxy_port"                :"9997",						// The port that proxy is running on
-	  	"proxied_host"              :"http://localhost:8080",
-	  	// "proxied_host"              :"https://10.33.120.58:9443",	// The proxied server, it must contains three parts: protocol, 
+	  //---------------[ Setup Example for vSphere web client ]---------------//
+	  	"proxy_port"                :"9996",						// The port that proxy is running on
+	  	"proxied_host"              :"https://10.33.120.58:9443",	// The proxied server, it must contains three parts: protocol, 
 	  																// ip address, and port number. It also will be the destination 
 	  																// server for the sender.
 	  	
 		"directory"					:"test",						// The directory which contains all recorded requests/responses
-		// "filter"					:"/vsphere-client/vcc-ui",		// All requests under this path will be recorded
-		"filter"					:"",
-		"player_port"				:"9997",						// The port that the player is running on. In most cases, this port 
+		"filter"					:"/vsphere-client/vcc-ui",		// All requests under this path will be recorded
+		"player_port"				:"9996",						// The port that the player is running on. In most cases, this port 
 																	// number should be the same the proxy port.
-		"interval"					:"500"							// The interval that the sender use to send requests
-		
+
+		"interval"					:"500",							// The interval that the sender use to send requests
+		"start_point"				:["/vsphere-client/vcc-ui/resources/setup-wizard/index.html",
+									  "/vsphere-client/vcc-ui/resources/networkExtenstionList.html"]		// Start point for player when proxying for vSphere
+
+
+
+		//---------------[ Setup Example for http://localhost:8080 ]---------------//
+		// "proxy_port"                :"9997",
+		// "proxied_host"              :"http://localhost:8080",
+		// "directory"					:"test",
+		// "filter"					:"",
+		// "player_port"				:"9997",						
+		// "interval"					:"500",							
+		// "start_point"				:["/vsphere-client/vcc-ui/resources/setup-wizard/index.html"]
 	  },
 	  pkg: grunt.file.readJSON('proxy.json'),
 
@@ -32,7 +44,7 @@ module.exports = function (grunt) {
             command: 'node startProxy.js <%= json.proxy_port %> <%= json.proxied_host %> <%= json.directory %>  <%= json.filter %> '
         },
         player: {
-        	command: 'node startPlayer.js <%= json.player_port %> <%= json.directory %> <%= json.proxied_host %>'
+        	command: 'node startPlayer.js <%= json.player_port %> <%= json.directory %> <%= json.proxied_host %> <%= json.start_point %> '
         },
         sender: {
         	command: 'node startSender.js <%= json.proxied_host %> <%= json.directory %> <%= json.interval %> '

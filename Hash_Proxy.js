@@ -18,7 +18,7 @@ exports.test = function test(para_port, para_host, para_directory, para_filter){
 
 	//---------------[ Local variables ]---------------//
 	listenPort = para_port;
-	var proxiedHost = para_host;
+	proxiedHost = para_host;
 	var directory = para_directory;
 	var filter = para_filter;
 	var hostName = '';
@@ -80,12 +80,15 @@ exports.test = function test(para_port, para_host, para_directory, para_filter){
 	if(protocol == 'https'){
 		var m = require('./proxy-get-middleware.js');
 		var m2 = require('./proxy-post-middleware.js');
+		var m3 = require('./proxy-put-middleware.js');
+		proxyApp.put('/*', m3.putHandler);
 	}else{
 		var m = require('./http-proxy-get-middleware.js');
 		var m2 = require('./http-proxy-post-middleware.js');
 	}
 	proxyApp.get('/*', m.getHandler);
 	proxyApp.post('/*', m2.postHandler);
+
 
 	//---------------[ Start the Server ]---------------//
 	if(protocol == 'https'){

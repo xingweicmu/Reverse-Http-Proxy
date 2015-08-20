@@ -1,4 +1,4 @@
-exports.startPlayer = function startPlayer(para_port, para_directory, para_host){
+exports.startPlayer = function startPlayer(para_port, para_directory, para_host, para_startPoint){
 
 	//---------------[ Setup Dependencies ]---------------//
 	var express = require('express');
@@ -19,8 +19,11 @@ exports.startPlayer = function startPlayer(para_port, para_directory, para_host)
 	var listenPort = para_port;
 	var directory = para_directory;
 	var proxiedHost = para_host;
+	var startPoint = para_startPoint;
 	var parts = proxiedHost.split(':');
 	var	protocol = parts[0];
+	console.log("wtf"+para_startPoint);
+	console.log(para_host);
 
 
 	//---------------[ Set values for Global variables ]---------------//
@@ -80,14 +83,31 @@ exports.startPlayer = function startPlayer(para_port, para_directory, para_host)
 			map.set(key, value);
 			console.log(value);
 		}
+
+		//---------------[ Print out the start point ]---------------//
+		console.log('\n---------------[ Start Points ]------------------');
+		var startPointArray = startPoint.split(',');
+		for(var j = 0; j < startPointArray.length; j++){
+			var theStartPoint = startPointArray[j].replace(new RegExp('/', 'g'), '!');
+			for(var i = 0; i < requestList.length; i++ ){
+				if(requestList[i].indexOf(theStartPoint) > -1){
+					var path = requestList[i].substring(requestList[i].indexOf(theStartPoint)).replace(new RegExp('!', 'g'), '/');
+					console.log(protocol+'://localhost:'+listenPort+path);
+				}
+			}
+		}
+
 	});
 	shared_map = map;
+
+
 
 	//---------------[ Setup the Middleware ]---------------//
 	var m = require('./player-get-middleware.js');
 	var m1 = require('./player-post-middleware.js');
 	playerApp.get('/*', m.getHandler);
 	playerApp.post('/*', m1.postHandler);
+	playerApp.put('/*', m1.postHandler);
 
 	//---------------[ Start the Server ]---------------//
 	if(protocol == 'https'){
