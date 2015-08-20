@@ -58,29 +58,43 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 		// 3. Create foldername in the format of num-hash-path
 		var foldername = requestCount + '_' + hash + '_' + filePath;
 		console.log(foldername);
-		// 4. Create folder
-		fs.mkdir(serviceName+'/'+foldername,function(){
-			// 5. Write file
-			fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-				if (err) throw err;
+
+		if (typeof String.prototype.startsWith != 'function') {
+  			String.prototype.startsWith = function (str){
+ 				return this.slice(0, str.length) == str;
+			};
+		}
+		if (webRequest.path.startsWith(filter)) {
+			// 4. Create folder
+			fs.mkdir(serviceName+'/'+foldername,function(){
+				// 5. Write file
+				fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+					if (err) throw err;
+				});
+
+				fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(rtnHeaders), function (err) {
+		  			if (err) throw err;
+				});
+
+				fs.writeFile(serviceName+'/'+foldername+'/Response', body, function (err) {
+		  			if (err) throw err;
+				});
+
+				console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
+
+				// 6. Send back the response
+				response.writeHead(cbresponse.statusCode,rtnHeaders);
+				response.write(body);
+				response.end();
 			});
-
-			fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(rtnHeaders), function (err) {
-	  			if (err) throw err;
-			});
-
-			fs.writeFile(serviceName+'/'+foldername+'/Response', body, function (err) {
-	  			if (err) throw err;
-			});
-
-			console.log('Response Code:'+cbresponse.statusCode); // + '   Body:'+body);
-
-			// 6. Send back the response
+		}
+		else{
+			requestCount--;
+						// 6. Send back the response
 			response.writeHead(cbresponse.statusCode,rtnHeaders);
 			response.write(body);
 			response.end();
-		});
-
+		}
         console.log('--------------------[ /endpoint Response '+currentCount+ ' ]---------------');
 	};
 

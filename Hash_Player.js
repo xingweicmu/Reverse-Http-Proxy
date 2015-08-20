@@ -1,4 +1,4 @@
-exports.startPlayer = function startPlayer(para_port, para_directory){
+exports.startPlayer = function startPlayer(para_port, para_directory, para_host){
 
 	//---------------[ Setup Dependencies ]---------------//
 	var express = require('express');
@@ -18,6 +18,10 @@ exports.startPlayer = function startPlayer(para_port, para_directory){
 	//---------------[ Local variables used by server ]---------------//
 	var listenPort = para_port;
 	var directory = para_directory;
+	var proxiedHost = para_host;
+	var parts = proxiedHost.split(':');
+	var	protocol = parts[0];
+
 
 	//---------------[ Set values for Global variables ]---------------//
 	// Passing local variable to global variable for middleware use
@@ -86,15 +90,15 @@ exports.startPlayer = function startPlayer(para_port, para_directory){
 	playerApp.post('/*', m1.postHandler);
 
 	//---------------[ Start the Server ]---------------//
-	var privateKey  = fs.readFileSync('key.pem', 'utf8');
-	var certificate = fs.readFileSync('cert.pem', 'utf8');
-
-	var credentials = {key: privateKey, cert: certificate};
-
-	var httpServer = http.createServer(playerApp);
-	var httpsServer = https.createServer(credentials, playerApp);
-
-	httpServer.listen(9997);
-	httpsServer.listen(listenPort);
+	if(protocol == 'https'){
+		var privateKey  = fs.readFileSync('key.pem', 'utf8');
+		var certificate = fs.readFileSync('cert.pem', 'utf8');
+		var credentials = {key: privateKey, cert: certificate};
+		var httpsServer = https.createServer(credentials, playerApp);
+		httpsServer.listen(listenPort);
+	}else{
+		var httpServer = http.createServer(playerApp);
+		httpServer.listen(listenPort);
+	}
 
 }

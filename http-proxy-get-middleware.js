@@ -55,44 +55,56 @@ exports.getHandler = function getHandler(webRequest, response, next) {
   		request(options, function (error, resp, body) {
     		if (!error) {
         		console.log(webRequest.url);
-        		// console.log(resp.body);
 
-        		// Add the count by one after receiving the response
-	        	requestCount++;
+	        		// Add the count by one after receiving the response
+		        	requestCount++;
 
-	        	// rqst - the request sent to the proxy
-				var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
+		        	// rqst - the request sent to the proxy
+					var rqst = {'path':webRequest.path, 'method':'get', 'headers':webRequest.headers};
 
-				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'get'};
-				// var cookie = webRequest.headers['cookie'];
-				// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
+					// 1. Normalize the request
+					var normalized = {'path':webRequest.path, 'method':'get'};
+					// var cookie = webRequest.headers['cookie'];
+					// var normalized = {'path':webRequest.path, 'method':'get', 'cookie':cookie};
 
-				// 2. Do Hash
-				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
-				
-				// 3. Create foldername in the format of num-hash-path
-				var foldername = requestCount + '_' + hash + '_' + filePath;
-				// console.log('FILE_NAME: '+foldername);
-				
-				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
+					// 2. Do Hash
+					var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 					
-					// 5. Write to the file
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
-			        fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
-						if (err) return console.log('ERR!!!'+err);
-					});
+					// 3. Create foldername in the format of num-hash-path
+					var foldername = requestCount + '_' + hash + '_' + filePath;
+					// console.log('FILE_NAME: '+foldername);
+				
+				if (typeof String.prototype.startsWith != 'function') {
+  					String.prototype.startsWith = function (str){
+    					return this.slice(0, str.length) == str;
+  					};
+				}
+        		// console.log(resp.body);
+        		if (webRequest.path.startsWith(filter)) {
+					// 4. Create folder
+					fs.mkdir(serviceName+'/'+foldername,function(){
+						
+						// 5. Write to the file
+						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+							if (err) return console.log('ERR!!!'+err);
+						});
+				        fs.writeFile(serviceName+'/'+foldername+'/Response', body, function(err) {
+							if (err) return console.log('ERR!!!'+err);
+						});
+						fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(resp.headers), function(err) {
+							if (err) return console.log('ERR!!!'+err);
+						});
 
-					// 6. Send back the response from the server
-		        	response.write(resp.body);
+						// 6. Send back the response from the server
+			        	response.write(resp.body);
+						response.end();
+					});
+				}
+				else{
+					requestCount--;
+					response.write(resp.body);
 					response.end();
-				});
+				}
 			}
     		else {
     			console.log("ERROR in sending/receving the request " + webRequest.path);
@@ -133,27 +145,37 @@ exports.getHandler = function getHandler(webRequest, response, next) {
 				// 3. Create foldername in the format of num-hash-path
 				var foldername = requestCount + '_' + hash + '_' + filePath;
 				
-				// 4. Create folder
-				fs.mkdir(serviceName+'/'+foldername,function(){
-					
-					// 5. Write the request to file 
-					fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
-						if (err) return console.log('ERR!!!'+err);
+				if (typeof String.prototype.startsWith != 'function') {
+  					String.prototype.startsWith = function (str){
+    					return this.slice(0, str.length) == str;
+  					};
+				}
+				if (webRequest.path.startsWith(filter)) {
+					// 4. Create folder
+					fs.mkdir(serviceName+'/'+foldername,function(){
+						
+						// 5. Write the request to file 
+						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {
+							if (err) return console.log('ERR!!!'+err);
+						});
+
+						fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
+		            		if (err) return console.log('ERR!!!'+err);
+		            		console.log('File saved.')
+		        		})
+
+						fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
+							if (err) throw err
+						})
+
+						// 6. Send back the data
+						response.end(imagedata, 'binary');
 					});
-
-					fs.writeFile(serviceName+'/'+foldername+'/Response', imagedata, 'binary', function(err){
-	            		if (err) return console.log('ERR!!!'+err);
-	            		console.log('File saved.')
-	        		})
-
-					fs.writeFile(serviceName+'/'+foldername+'/ResponseHeader', JSON.stringify(res.headers), 'binary', function(err){
-						if (err) throw err
-					})
-
+				}else{
+					requestCount--;
 					// 6. Send back the data
 					response.end(imagedata, 'binary');
-				});
-
+				}
 			})
 
   		})

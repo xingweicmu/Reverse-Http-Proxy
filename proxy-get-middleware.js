@@ -80,12 +80,18 @@ exports.getHandler = function getHandler(webRequest, response, next) {
 					function endsWith(str, suffix) {
 						return str.indexOf(suffix, str.length - suffix.length) != -1;
 					}
+					if (typeof String.prototype.startsWith != 'function') {
+  						String.prototype.startsWith = function (str){
+    						return this.slice(0, str.length) == str;
+  						};
+					}
 
 					// Filter /vcc-ui/
+					console.log('FILTER:'+webRequest.path.startsWith(filter));
+					// filter = filter.replace(new RegExp('/', 'g'), '!');
 					console.log('FILTER:'+filter);
-					filter = filter.replace(new RegExp('/', 'g'), '!');
-					console.log('FILTER:'+filter);
-					if(!endsWith(foldername,'swf') && foldername.indexOf(filter) != -1){	
+					// if(!endsWith(foldername,'swf') && foldername.indexOf(filter) != -1){	
+					if(!endsWith(foldername,'swf') && webRequest.path.startsWith(filter)){	
 						// requestCount++;
 						// 4. Create folder
 						fs.mkdir(serviceName+'/'+foldername,function(){

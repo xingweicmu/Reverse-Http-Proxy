@@ -2,21 +2,19 @@ module.exports = function (grunt) {
 
 	grunt.initConfig({
 	  json: {
-	  	"proxy_port"                :"9996",
-	  	"proxied_host"              :"https://10.33.120.58:9443",
-		// "protocol"                  :"https",
-		"directory"					:"test",
-		"filter"					:"vcc-ui",
-
-		"player_port"				:"9996",
-		// "protocol"					:"https",
-		"directory"					:"test",
-
-		"destination"				:"https://10.33.120.58:9443",
-		// "protocol"					:"https",
-		"directory"					:"test",
-		"interval"					:"500"
-
+	  	"proxy_port"                :"9997",						// The port that proxy is running on
+	  	"proxied_host"              :"http://localhost:8080",
+	  	// "proxied_host"              :"https://10.33.120.58:9443",	// The proxied server, it must contains three parts: protocol, 
+	  																// ip address, and port number. It also will be the destination 
+	  																// server for the sender.
+	  	
+		"directory"					:"test",						// The directory which contains all recorded requests/responses
+		// "filter"					:"/vsphere-client/vcc-ui",		// All requests under this path will be recorded
+		"filter"					:"",
+		"player_port"				:"9997",						// The port that the player is running on. In most cases, this port 
+																	// number should be the same the proxy port.
+		"interval"					:"500"							// The interval that the sender use to send requests
+		
 	  },
 	  pkg: grunt.file.readJSON('proxy.json'),
 
@@ -34,11 +32,10 @@ module.exports = function (grunt) {
             command: 'node startProxy.js <%= json.proxy_port %> <%= json.proxied_host %> <%= json.directory %>  <%= json.filter %> '
         },
         player: {
-        	command: 'node startPlayer.js <%= json.player_port %> <%= json.directory %> '
-        	// <%= json.player_port %> <%= json.directory %> 
+        	command: 'node startPlayer.js <%= json.player_port %> <%= json.directory %> <%= json.proxied_host %>'
         },
         sender: {
-        	command: 'node startSender.js <%= json.destination %> <%= json.directory %> <%= json.interval %> '
+        	command: 'node startSender.js <%= json.proxied_host %> <%= json.directory %> <%= json.interval %> '
         }
 
 
@@ -69,18 +66,18 @@ module.exports = function (grunt) {
 
 	grunt.registerTask('printConfig', function() {
   		parameters = grunt.config().json;
-  		grunt.log.writeln('\n=========[ Configuration for proxy]==========');
+  		grunt.log.writeln('\n=========[ Configuration for Proxy]==========');
   		grunt.log.writeln('proxy_port      :'+parameters.proxy_port);
   		grunt.log.writeln('proxied_host    :'+parameters.proxied_host);
   		grunt.log.writeln('directory       :'+parameters.directory);
   		grunt.log.writeln('filter          :'+parameters.filter);
 
-  		grunt.log.writeln('\n=========[ Configuration for player]==========');
+  		grunt.log.writeln('\n=========[ Configuration for Player]==========');
   		grunt.log.writeln('player_port     :'+parameters.player_port);
   		grunt.log.writeln('directory       :'+parameters.directory);
 
-  		grunt.log.writeln('\n=========[ Configuration for sender]==========');
-  		grunt.log.writeln('destination     :'+parameters.destination);
+  		grunt.log.writeln('\n=========[ Configuration for Sender]==========');
+  		grunt.log.writeln('destination     :'+parameters.proxy_port);
   		grunt.log.writeln('directory       :'+parameters.directory);
   		grunt.log.writeln('interval        :'+parameters.interval);
 	});

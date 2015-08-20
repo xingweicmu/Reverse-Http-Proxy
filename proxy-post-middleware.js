@@ -55,7 +55,8 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 				var filePath = webRequest.url.replace(new RegExp('/', 'g'), '!');
 				var rqst = {'path':webRequest.path, 'method':'post', 'headers':webRequest.headers, 'body':body};
 				// 1. Normalize the request
-				var normalized = {'path':webRequest.path, 'method':'post'};
+				// var normalized = {'path':webRequest.path, 'method':'post'};
+				var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
 				// 2. Do Hash
 				var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 				// 3. Create foldername in the format of num-hash-path
@@ -63,8 +64,14 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 				console.log(foldername);
 				// 4. Create folder
 				// Double check 
-				filter = filter.replace(new RegExp('/', 'g'), '!');
-				if( foldername.indexOf(filter) != -1){	
+				if (typeof String.prototype.startsWith != 'function') {
+  					String.prototype.startsWith = function (str){
+    					return this.slice(0, str.length) == str;
+  					};
+				}
+				// filter = filter.replace(new RegExp('/', 'g'), '!');
+				// if( foldername.indexOf(filter) != -1){	
+				if (webRequest.path.startsWith(filter)) {
 					fs.mkdir(serviceName+'/'+foldername,function(){
 						// 5. Write file
 						fs.writeFile(serviceName+'/'+foldername+'/Request', JSON.stringify(rqst), function(err) {

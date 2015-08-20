@@ -17,7 +17,7 @@ exports.test = function test(para_port, para_host, para_directory, para_filter){
 	shared_filter = '';
 
 	//---------------[ Local variables ]---------------//
-	var listenPort = para_port;
+	listenPort = para_port;
 	var proxiedHost = para_host;
 	var directory = para_directory;
 	var filter = para_filter;
@@ -77,22 +77,30 @@ exports.test = function test(para_port, para_host, para_directory, para_filter){
 	}
 
 	//---------------[ Setup the Middleware ]---------------//
-	var m = require('./proxy-get-middleware.js');
-	var m2 = require('./proxy-post-middleware.js');
+	if(protocol == 'https'){
+		var m = require('./proxy-get-middleware.js');
+		var m2 = require('./proxy-post-middleware.js');
+	}else{
+		var m = require('./http-proxy-get-middleware.js');
+		var m2 = require('./http-proxy-post-middleware.js');
+	}
 	proxyApp.get('/*', m.getHandler);
 	proxyApp.post('/*', m2.postHandler);
 
 	//---------------[ Start the Server ]---------------//
-	var privateKey  = fs.readFileSync('key.pem', 'utf8');
-	var certificate = fs.readFileSync('cert.pem', 'utf8');
+	if(protocol == 'https'){
+		// Start https server
+		var privateKey  = fs.readFileSync('key.pem', 'utf8');
+		var certificate = fs.readFileSync('cert.pem', 'utf8');
+		var credentials = {key: privateKey, cert: certificate};
+		var httpsServer = https.createServer(credentials, proxyApp);
+		httpsServer.listen(listenPort);
+	}else{
+		// Start http server
+		var httpServer = http.createServer(proxyApp);
+		httpServer.listen(listenPort);
+	}
 
-	var credentials = {key: privateKey, cert: certificate};
-
-	var httpServer = http.createServer(proxyApp);
-	var httpsServer = https.createServer(credentials, proxyApp);
-
-	httpServer.listen(9997);
-	httpsServer.listen(listenPort);
 }
 
 

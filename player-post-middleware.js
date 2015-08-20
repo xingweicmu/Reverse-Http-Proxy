@@ -16,13 +16,14 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 	var headers = webRequest.headers;
 
 	// Handle text content: html, css, js
-	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8'){
+	if(webRequest.headers['content-type'] == 'application/json;charset=utf-8'
+		|| webRequest.url == '/vsphere-client/vcc-ui/rest/hm/api/session'){
 		// First parse the request and create its corresponding filepath
 		var url = webRequest.url;
 		var filename = url.replace(new RegExp('/', 'g'), '!');
 		// var normalized = {'path':webRequest.path, 'method':'post'};
 		var normalized = {'path':webRequest.path, 'method':'post', 'body':JSON.stringify(webRequest.body)};
-		console.log('NORMALIZED:'+JSON.stringify(normalized));
+		// console.log('NORMALIZED:'+JSON.stringify(normalized));
 		var hash = require('crypto').createHash('md5').update(JSON.stringify(normalized)).digest("hex");
 		var hash_path = hash + '_' + filename;
 		console.log('HASH_PATH:'+hash_path);
@@ -50,7 +51,7 @@ exports.postHandler = function postHandler(webRequest, response, next) {
 				var key = keys[i];
 				if(key!="host" && key!="user-agent" && key != 'accept-language' 
 					&& key != 'cookie' && key != 'accept' && key != 'content-length' 
-					&& key != 'accept-encoding'){
+					&& key != 'accept-encoding' && key != 'referer'){
 					headerMatch = (webRequest.headers[key]==firstRequest.headers[key]);
 					if(!headerMatch){
 						console.log('Different Key: ' + key);
